@@ -1,3 +1,4 @@
 using FunctionalTodo;
 
-Startup.BuildApp(args).Run();
+var app = Startup.BuildApp(args);
+app.Run();

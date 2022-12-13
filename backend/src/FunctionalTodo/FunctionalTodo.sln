@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FunctionalTodo", "FunctionalTodo\FunctionalTodo.csproj", "{02F5E052-4CA2-411A-A2D0-AD1B071E3350}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FunctionalTodo.Test", "FunctionalTodo.Test\FunctionalTodo.Test.csproj", "{1770DACB-0055-4172-BB58-BCEA4F21A556}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{02F5E052-4CA2-411A-A2D0-AD1B071E3350}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{02F5E052-4CA2-411A-A2D0-AD1B071E3350}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{02F5E052-4CA2-411A-A2D0-AD1B071E3350}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1770DACB-0055-4172-BB58-BCEA4F21A556}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1770DACB-0055-4172-BB58-BCEA4F21A556}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1770DACB-0055-4172-BB58-BCEA4F21A556}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1770DACB-0055-4172-BB58-BCEA4F21A556}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

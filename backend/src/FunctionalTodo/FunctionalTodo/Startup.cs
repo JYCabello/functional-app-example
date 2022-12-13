@@ -1,14 +1,27 @@
-﻿namespace FunctionalTodo;
+﻿using System.Reflection;
+using Microsoft.AspNetCore.Mvc.ApplicationParts;
+
+namespace FunctionalTodo;
 
 public static class Startup
 {
-    public static WebApplication BuildApp(string[] args)
+    public static WebApplicationBuilder GetBuilder(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
-        builder.Services.AddControllers();
+        builder
+            .Services
+            .AddControllers()
+            .PartManager
+            .ApplicationParts
+            .Add(new AssemblyPart(typeof(Startup).GetTypeInfo().Assembly));
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
 
+        return builder;
+    }
+
+    public static WebApplication BuildApp(WebApplicationBuilder builder)
+    {
         var app = builder.Build();
 
         if (app.Environment.IsDevelopment())
@@ -25,4 +38,7 @@ public static class Startup
 
         return app;
     }
+
+    public static WebApplication BuildApp(string[] args) =>
+        BuildApp(GetBuilder(args));
 }
