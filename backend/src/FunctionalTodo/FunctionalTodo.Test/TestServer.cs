@@ -9,6 +9,7 @@ using Flurl.Http;
 using Flurl.Http.Configuration;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
 using static DeFuncto.Prelude;
@@ -151,11 +152,28 @@ public class TestServer : IAsyncDisposable, IDisposable
 
         async Task TryMigrate(int count)
         {
+            try
+            {
+                await using var connection =
+                    new SqlConnection($"Server=localhost,{sqlPort};User Id=sa;Password=abcd1234ABCD;TrustServerCertificate=True");
+                connection.Open();
+                var command = connection.CreateCommand();
+                command.CommandText = "CREATE DATABASE todo";
+                await command.ExecuteNonQueryAsync();
+            }
+            catch (Exception)
+            {
+                if (count > 15)
+                    throw;
+                await Task.Delay(250);
+                await TryMigrate(count + 1);
+            }
+
             if (Migrations.Program.Main(new[] { connectionString }) != 0)
             {
                 if (count > 15)
                     throw new Exception("Could not migrate");
-                await Task.Delay(1000);
+                await Task.Delay(250);
                 await TryMigrate(count + 1);
             }
         }
