@@ -1,17 +1,17 @@
 using DeFuncto;
+using FunctionalTodo.Models;
 
 namespace FunctionalTodo.Test;
 
 using static Prelude;
 
-public class UnitTest1
+public class ListAcceptance
 {
     [Fact]
     public async Task Test1()
     {
         using var server = new TestServer();
-
-        var x = await server.Get<List<WeatherForecast>>("WeatherForecast", None);
-        int a = 9;
+        var items = await server.Get<List<TodoListItem>>("Todo", None);
+        Assert.Empty(items);
     }
 }
