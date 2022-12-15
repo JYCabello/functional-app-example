@@ -65,14 +65,52 @@ public static class DockerUtilities
                         var response = await client.Containers.CreateContainerAsync(cp);
                         return response.ID;
                     });
-        
+
         await client.Containers.StartContainerAsync(id, new ContainerStartParameters());
 
         return id;
     }
+
+    public static async Task DeleteContainer(string id)
+    {
+        using var client = GetClient();
+        await client.Containers.StopContainerAsync(id, new ContainerStopParameters());
+        await client.Containers.RemoveContainerAsync(id, new ContainerRemoveParameters());
+    }
+
+    public static CreateContainerParameters SqlServerParams(int port)
+    {
+        var name = $"fp-api-sample-irene{port}";
+        var http = new PortBinding
+        {
+            HostPort = $"{port}/tcp",
+            HostIP = "0.0.0.0"
+        };
+        var bindings = new Dictionary<string, IList<PortBinding>>
+        {
+            {"2113/tcp", new List<PortBinding> { http }}
+        };
+        var hostConfig = new HostConfig
+        {
+            PortBindings = bindings
+        };
+
+        var environmentVars = new List<string>
+        {
+            "SA_PASSWORD=abcd1234ABCD",
+            "ACCEPT_EULA=Y"
+        };
+        return new CreateContainerParameters
+        {
+            Name = name,
+            Image = "mcr.microsoft.com/mssql/server:2022-latest",
+            Env = environmentVars,
+            HostConfig = hostConfig
+        };
+    }
 }
 
-public class TestServer : IDisposable
+public class TestServer : IAsyncDisposable, IDisposable
 {
     private static readonly SemaphoreSlim Sm = new(1);
 
@@ -80,9 +118,11 @@ public class TestServer : IDisposable
 
     private readonly WebApplication host;
     private readonly string url;
+    private readonly string sqlContainerID;
 
-    public TestServer()
+    private TestServer(string sqlContainerID)
     {
+        this.sqlContainerID = sqlContainerID;
         var port = GetPort();
         var builder = Startup.GetBuilder(Array.Empty<string>());
         builder.WebHost.UseUrls($"https://localhost:{port}");
@@ -93,8 +133,19 @@ public class TestServer : IDisposable
 
     private static int RandomPort => Rn.Next(30_000) + 10_000;
 
-    public void Dispose() =>
+    public void Dispose()
+    {
         (host as IDisposable).Dispose();
+        DockerUtilities.DeleteContainer(sqlContainerID).RunSynchronously();
+    }
+
+    public static async Task<TestServer> Create()
+    {
+        var sqlPort = GetPort();
+        var createParams = DockerUtilities.SqlServerParams(sqlPort);
+        var id = await DockerUtilities.StartContainer(createParams);
+        return new TestServer(id);
+    }
 
     private static TcpConnectionInformation[] GetConnectionInfo() =>
         IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpConnections();
@@ -154,4 +205,10 @@ public class TestServer : IDisposable
         BaseReq(path, queryParams)
             .PostMultipartAsync(mp => mp.AddFile("image", stream, fileName))
             .Map(_ => unit);
+
+    public async ValueTask DisposeAsync()
+    {
+        (host as IDisposable).Dispose();
+        await DockerUtilities.DeleteContainer(sqlContainerID);
+    }
 }

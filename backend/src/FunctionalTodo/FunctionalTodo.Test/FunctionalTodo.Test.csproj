@@ -26,6 +26,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\FunctionalTodo.Migrations\FunctionalTodo.Migrations.csproj" />
       <ProjectReference Include="..\FunctionalTodo\FunctionalTodo.csproj" />
     </ItemGroup>
 

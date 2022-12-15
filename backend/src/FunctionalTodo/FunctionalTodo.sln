@@ -9,6 +9,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution items", "Solution 
 		..\..\..\docker-compose.yaml = ..\..\..\docker-compose.yaml
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FunctionalTodo.Migrations", "FunctionalTodo.Migrations\FunctionalTodo.Migrations.csproj", "{07AB6A96-29DC-44B8-A3C6-D373B894D529}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -23,5 +25,9 @@ Global
 		{1770DACB-0055-4172-BB58-BCEA4F21A556}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1770DACB-0055-4172-BB58-BCEA4F21A556}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1770DACB-0055-4172-BB58-BCEA4F21A556}.Release|Any CPU.Build.0 = Release|Any CPU
+		{07AB6A96-29DC-44B8-A3C6-D373B894D529}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{07AB6A96-29DC-44B8-A3C6-D373B894D529}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{07AB6A96-29DC-44B8-A3C6-D373B894D529}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{07AB6A96-29DC-44B8-A3C6-D373B894D529}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
