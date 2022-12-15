@@ -81,14 +81,14 @@ public static class DockerUtilities
     public static CreateContainerParameters SqlServerParams(int port)
     {
         var name = $"fp-api-sample-irene{port}";
-        var http = new PortBinding
+        var portBinding = new PortBinding
         {
             HostPort = $"{port}/tcp",
             HostIP = "0.0.0.0"
         };
         var bindings = new Dictionary<string, IList<PortBinding>>
         {
-            {"2113/tcp", new List<PortBinding> { http }}
+            {"1433/tcp", new List<PortBinding> { portBinding }}
         };
         var hostConfig = new HostConfig
         {
@@ -144,7 +144,21 @@ public class TestServer : IAsyncDisposable, IDisposable
         var sqlPort = GetPort();
         var createParams = DockerUtilities.SqlServerParams(sqlPort);
         var id = await DockerUtilities.StartContainer(createParams);
+        var connectionString =
+            $"Server=localhost,{sqlPort};Database=todo;User Id=sa;Password=abcd1234ABCD;TrustServerCertificate=True";
+        await TryMigrate(0);
         return new TestServer(id);
+
+        async Task TryMigrate(int count)
+        {
+            if (Migrations.Program.Main(new[] { connectionString }) != 0)
+            {
+                if (count > 15)
+                    throw new Exception("Could not migrate");
+                await Task.Delay(1000);
+                await TryMigrate(count + 1);
+            }
+        }
     }
 
     private static TcpConnectionInformation[] GetConnectionInfo() =>
