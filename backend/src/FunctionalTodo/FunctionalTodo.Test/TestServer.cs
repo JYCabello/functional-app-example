@@ -1,6 +1,9 @@
 ﻿using System.Net.NetworkInformation;
+using System.Runtime.InteropServices;
 using DeFuncto;
 using DeFuncto.Extensions;
+using Docker.DotNet;
+using Docker.DotNet.Models;
 using Flurl;
 using Flurl.Http;
 using Flurl.Http.Configuration;
@@ -11,7 +14,63 @@ using Newtonsoft.Json;
 using static DeFuncto.Prelude;
 using NullValueHandling = Newtonsoft.Json.NullValueHandling;
 
+
 namespace FunctionalTodo.Test;
+
+public static class DockerUtilities
+{
+    private static DockerClient GetClient()
+    {
+        var defaultWindowsDockerEngineUri = new Uri("npipe://./pipe/docker_engine");
+        var defaultLinuxDockerEngineUri =
+            Environment.GetEnvironmentVariable("DOCKER_HOST") switch
+            {
+                null => new Uri("unix:///var/run/docker.sock"),
+                var value => new Uri(value)
+            };
+        var engineUri =
+            RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                ? defaultWindowsDockerEngineUri
+                : defaultLinuxDockerEngineUri;
+
+        return new DockerClientConfiguration(engineUri).CreateClient();
+    }
+
+    public static async Task<string> StartContainer(CreateContainerParameters cp)
+    {
+        using var client = GetClient();
+        await client.Images.CreateImageAsync(
+            new ImagesCreateParameters
+            {
+                FromImage = cp.Image.Split(":")[0],
+                Tag = cp.Image.Split(":")[1]
+            },
+            null,
+            new Progress<JSONMessage>());
+
+        var containers =
+            await client.Containers.ListContainersAsync(
+                new ContainersListParameters { All = true }
+            );
+
+        var container =
+            containers.SingleOrNone(c => c.Names.Any(n => n == $"/{cp.Name}"));
+
+        var id = await
+            container
+                .Match(
+                    clr => clr.ID.Apply(Task.FromResult),
+                    async () =>
+                    {
+                        var response = await client.Containers.CreateContainerAsync(cp);
+                        return response.ID;
+                    });
+        
+        await client.Containers.StartContainerAsync(id, new ContainerStartParameters());
+
+        return id;
+    }
+}
 
 public class TestServer : IDisposable
 {

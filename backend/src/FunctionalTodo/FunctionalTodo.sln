@@ -4,6 +4,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FunctionalTodo", "Functiona
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FunctionalTodo.Test", "FunctionalTodo.Test\FunctionalTodo.Test.csproj", "{1770DACB-0055-4172-BB58-BCEA4F21A556}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution items", "Solution items", "{C5A88E24-52CE-43F0-AFBB-D4A5F54EA525}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\docker-compose.yaml = ..\..\..\docker-compose.yaml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
