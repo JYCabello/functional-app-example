@@ -11,4 +11,11 @@
       <PackageReference Include="dbup" Version="5.0.8" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Remove="Scripts\00001-CreateTodoTable.sql" />
+      <EmbeddedResource Include="Scripts\00001-CreateTodoTable.sql">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </EmbeddedResource>
+    </ItemGroup>
+
 </Project>

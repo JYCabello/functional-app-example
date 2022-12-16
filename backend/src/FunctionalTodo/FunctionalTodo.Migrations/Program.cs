@@ -10,7 +10,7 @@ public static class Program
     {
         var connectionString =
             args.FirstOrDefault()
-            ?? "Server=localhost,1314;Database=todo;User Id=sa;Password=abcd1234ABCD;TrustServerCertificate=True";
+            ?? "Server=localhost,1316;Database=todo;User Id=sa;Password=abcd1234ABCD;TrustServerCertificate=True";
 
         var upgrader =
             DeployChanges.To
