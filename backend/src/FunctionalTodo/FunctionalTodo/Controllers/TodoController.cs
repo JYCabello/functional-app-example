@@ -1,3 +1,5 @@
+using FunctionalTodo.DomainModel;
+using FunctionalTodo.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FunctionalTodo.Controllers;
@@ -7,11 +9,21 @@ namespace FunctionalTodo.Controllers;
 public class TodoController : ControllerBase
 {
     private readonly ILogger<TodoController> logger;
+    private readonly IDbAccessFunctions dbAccessFunctions;
 
-    public TodoController(ILogger<TodoController> logger) =>
+    public TodoController(ILogger<TodoController> logger, IDbAccessFunctions dbAccessFunctions)
+    {
         this.logger = logger;
+        this.dbAccessFunctions = dbAccessFunctions;
+    }
 
     [HttpGet(Name = "List")]
-    public IEnumerable<WeatherForecast> Get() =>
-        throw new NotImplementedException("todo");
+    public Task<ActionResult<IEnumerable<TodoListItem>>> Get() =>
+        Get(dbAccessFunctions.GetAllFromDb);
+
+    public async Task<ActionResult<IEnumerable<TodoListItem>>> Get(GetAllFromDb gafdb)
+    {
+        var todos = await gafdb();
+        return Ok(todos);
+    }
 }
