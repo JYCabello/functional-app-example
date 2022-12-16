@@ -1,3 +1,8 @@
 ﻿namespace FunctionalTodo.Models;
 
-public record TodoListItem(Guid ID, string Title, bool IsCompleted);
+public class TodoListItem
+{
+    public Guid ID { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public bool IsCompleted { get; set; }
+}
