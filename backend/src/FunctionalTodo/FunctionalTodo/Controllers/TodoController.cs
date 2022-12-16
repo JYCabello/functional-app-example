@@ -7,7 +7,7 @@ using static DeFuncto.Prelude;
 namespace FunctionalTodo.Controllers;
 
 [ApiController]
-[Route("[controller]")]
+[Route("todo")]
 public class TodoController : ControllerBase
 {
     private readonly ILogger<TodoController> logger;
@@ -20,10 +20,22 @@ public class TodoController : ControllerBase
     }
 
     [HttpGet(Name = "List")]
+    [Route("list")]
     public Task<ActionResult<IEnumerable<TodoListItem>>> Get() =>
         Get(dbAccessFunctions.GetAllFromDb);
 
-    public async Task<ActionResult<IEnumerable<TodoListItem>>> Get(GetAllFromDb gafdb)
+    [HttpPost(Name = "Create")]
+    [Route("create")]
+    public Task<ActionResult> Create(TodoCreation dto) =>
+        Create(dbAccessFunctions.CreateTodo, dto);
+
+    private async Task<ActionResult> Create(CreateTodo createTodo, TodoCreation dto)
+    {
+        await createTodo(dto);
+        return Ok();
+    }
+    
+    private async Task<ActionResult<IEnumerable<TodoListItem>>> Get(GetAllFromDb gafdb)
     {
         var todos = await gafdb();
         return Ok(todos);

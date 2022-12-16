@@ -12,12 +12,12 @@ public class ListAcceptance
     public async Task Test1()
     {
         await using var server = await TestServer.Create();
-        Assert.Empty(await server.Get<List<TodoListItem>>("Todo", None));
-        await server.Post("Todo", None, new TodoCreation { Title = "my todo" });
-        Assert.Single(await server.Get<List<TodoListItem>>("Todo", None));
+        Assert.Empty(await server.Get<List<TodoListItem>>("todo/list", None));
+        await server.Post("todo/create", None, new TodoCreation { Title = "my todo" });
+        Assert.Single(await server.Get<List<TodoListItem>>("todo/list", None));
         try
         {
-            await server.Post("Todo", None, new TodoCreation { Title = "my todo" });
+            await server.Post("todo/create", None, new TodoCreation { Title = "my todo" });
             Assert.Fail("Should not have created a duplicated todo");
         }
         catch (FlurlHttpException ex)

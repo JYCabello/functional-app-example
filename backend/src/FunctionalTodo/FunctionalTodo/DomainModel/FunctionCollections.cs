@@ -6,6 +6,7 @@ namespace FunctionalTodo.DomainModel;
 
 public interface IDbAccessFunctions
 {
+    CreateTodo CreateTodo { get; }
     GetAllFromDb GetAllFromDb { get; }
 }
 
@@ -22,6 +23,7 @@ public class DbAccessFunctions : IDbAccessFunctions
         this.settingsFunctions = settingsFunctions;
 
     public GetAllFromDb GetAllFromDb => BuildGetAllFromDb(settingsFunctions.GetConnectionString);
+    public CreateTodo CreateTodo => BuildExecuteQuery(settingsFunctions.GetConnectionString);
 
     public GetAllFromDb BuildGetAllFromDb(GetConnectionString getConnectionString) =>
         async () =>
@@ -30,6 +32,13 @@ public class DbAccessFunctions : IDbAccessFunctions
             return await db.QueryAsync<TodoListItem>(
                 "SELECT ID, Title, IsCompleted FROM Todo"
             );
+        };
+
+    public CreateTodo BuildExecuteQuery(GetConnectionString getConnectionString) =>
+        async p =>
+        {
+            await using var db = new SqlConnection(getConnectionString());
+            return await db.ExecuteAsync("INSERT INTO Todo (Title, IsCompleted) VALUES (@title, 0)", p);
         };
 }
 
