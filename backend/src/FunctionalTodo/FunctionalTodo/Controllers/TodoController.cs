@@ -1,6 +1,8 @@
+using DeFuncto;
 using FunctionalTodo.DomainModel;
 using FunctionalTodo.Models;
 using Microsoft.AspNetCore.Mvc;
+using static DeFuncto.Prelude;
 
 namespace FunctionalTodo.Controllers;
 
