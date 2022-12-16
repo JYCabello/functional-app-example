@@ -7,10 +7,14 @@ using Docker.DotNet.Models;
 using Flurl;
 using Flurl.Http;
 using Flurl.Http.Configuration;
+using FunctionalTodo.Migrations;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 using static DeFuncto.Prelude;
 using NullValueHandling = Newtonsoft.Json.NullValueHandling;
@@ -89,7 +93,7 @@ public static class DockerUtilities
         };
         var bindings = new Dictionary<string, IList<PortBinding>>
         {
-            {"1433/tcp", new List<PortBinding> { portBinding }}
+            { "1433/tcp", new List<PortBinding> { portBinding } }
         };
         var hostConfig = new HostConfig
         {
@@ -118,8 +122,8 @@ public class TestServer : IAsyncDisposable, IDisposable
     private static readonly Random Rn = new();
 
     private readonly WebApplication host;
-    private readonly string url;
     private readonly string sqlContainerID;
+    private readonly string url;
 
     private TestServer(string sqlContainerID)
     {
@@ -133,6 +137,12 @@ public class TestServer : IAsyncDisposable, IDisposable
     }
 
     private static int RandomPort => Rn.Next(30_000) + 10_000;
+
+    public async ValueTask DisposeAsync()
+    {
+        (host as IDisposable).Dispose();
+        await DockerUtilities.DeleteContainer(sqlContainerID);
+    }
 
     public void Dispose()
     {
@@ -169,7 +179,7 @@ public class TestServer : IAsyncDisposable, IDisposable
                 await TryMigrate(count + 1);
             }
 
-            if (Migrations.Program.Main(new[] { connectionString }) != 0)
+            if (Program.Main(new[] { connectionString }) != 0)
             {
                 if (count > 45)
                     throw new Exception("Could not migrate");
@@ -237,10 +247,4 @@ public class TestServer : IAsyncDisposable, IDisposable
         BaseReq(path, queryParams)
             .PostMultipartAsync(mp => mp.AddFile("image", stream, fileName))
             .Map(_ => unit);
-
-    public async ValueTask DisposeAsync()
-    {
-        (host as IDisposable).Dispose();
-        await DockerUtilities.DeleteContainer(sqlContainerID);
-    }
 }
