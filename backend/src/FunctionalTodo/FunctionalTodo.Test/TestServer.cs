@@ -163,15 +163,15 @@ public class TestServer : IAsyncDisposable, IDisposable
             }
             catch (Exception)
             {
-                if (count > 15)
+                if (count > 45)
                     throw;
-                await Task.Delay(250);
+                await Task.Delay(500);
                 await TryMigrate(count + 1);
             }
 
             if (Migrations.Program.Main(new[] { connectionString }) != 0)
             {
-                if (count > 15)
+                if (count > 45)
                     throw new Exception("Could not migrate");
                 await Task.Delay(250);
                 await TryMigrate(count + 1);

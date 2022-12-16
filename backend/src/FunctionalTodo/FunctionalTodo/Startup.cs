@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using FunctionalTodo.DomainModel;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 
 namespace FunctionalTodo;
@@ -16,6 +17,7 @@ public static class Startup
             .Add(new AssemblyPart(typeof(Startup).GetTypeInfo().Assembly));
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
+        builder.Services.AddSingleton<IDbAccessFunctions, DbAccessFunctions>();
 
         return builder;
     }
