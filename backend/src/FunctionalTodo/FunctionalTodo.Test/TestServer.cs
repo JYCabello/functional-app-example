@@ -7,14 +7,13 @@ using Docker.DotNet.Models;
 using Flurl;
 using Flurl.Http;
 using Flurl.Http.Configuration;
+using FunctionalTodo.DomainModel;
 using FunctionalTodo.Migrations;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 using static DeFuncto.Prelude;
 using NullValueHandling = Newtonsoft.Json.NullValueHandling;
@@ -115,6 +114,17 @@ public static class DockerUtilities
     }
 }
 
+public class TestSettingsFunctions : ISettingsFunctions
+{
+    private readonly int port;
+
+    public TestSettingsFunctions(int port) =>
+        this.port = port;
+
+    public GetConnectionString GetConnectionString =>
+        () => $"Server=localhost,{port};Database=todo;User Id=sa;Password=abcd1234ABCD;TrustServerCertificate=True";
+}
+
 public class TestServer : IAsyncDisposable, IDisposable
 {
     private static readonly SemaphoreSlim Sm = new(1);
@@ -125,12 +135,13 @@ public class TestServer : IAsyncDisposable, IDisposable
     private readonly string sqlContainerID;
     private readonly string url;
 
-    private TestServer(string sqlContainerID)
+    private TestServer(string sqlContainerID, int sqlPort)
     {
         this.sqlContainerID = sqlContainerID;
         var port = GetPort();
         var builder = Startup.GetBuilder(Array.Empty<string>());
         builder.WebHost.UseUrls($"https://localhost:{port}");
+        builder.Services.AddSingleton<ISettingsFunctions>(_ => new TestSettingsFunctions(sqlPort));
         host = Startup.BuildApp(builder);
         host.Start();
         url = $"https://localhost:{port}/";
@@ -158,7 +169,7 @@ public class TestServer : IAsyncDisposable, IDisposable
         var connectionString =
             $"Server=localhost,{sqlPort};Database=todo;User Id=sa;Password=abcd1234ABCD;TrustServerCertificate=True";
         await TryMigrate(0);
-        return new TestServer(id);
+        return new TestServer(id, sqlPort);
 
         async Task TryMigrate(int count)
         {

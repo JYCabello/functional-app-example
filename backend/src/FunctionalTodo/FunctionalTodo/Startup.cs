@@ -18,6 +18,7 @@ public static class Startup
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
         builder.Services.AddSingleton<IDbAccessFunctions, DbAccessFunctions>();
+        builder.Services.AddSingleton<ISettingsFunctions, SettingsFunctions>();
 
         return builder;
     }

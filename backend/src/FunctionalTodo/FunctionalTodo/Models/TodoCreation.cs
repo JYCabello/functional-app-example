@@ -1,3 +1,6 @@
 ﻿namespace FunctionalTodo.Models;
 
-public record TodoCreation(string Title);
+public class TodoCreation
+{
+    public string Title { get; set; } = string.Empty;
+}
