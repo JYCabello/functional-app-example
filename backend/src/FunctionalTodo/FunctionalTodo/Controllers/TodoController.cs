@@ -31,8 +31,9 @@ public class TodoController : ControllerBase
 
     private async Task<ActionResult> Create(CreateTodo createTodo, TodoCreation dto)
     {
-        await createTodo(dto);
-        return Ok();
+        var success = await createTodo(dto);
+        if (success) return Ok();
+        return Conflict();
     }
     
     private async Task<ActionResult<IEnumerable<TodoListItem>>> Get(GetAllFromDb gafdb)

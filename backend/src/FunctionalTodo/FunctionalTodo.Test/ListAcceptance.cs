@@ -24,6 +24,7 @@ public class ListAcceptance
         {
             Assert.Equal(409, ex.StatusCode);
         }
+
         Assert.Single(await server.Get<List<TodoListItem>>("Todo", None));
     }
 }

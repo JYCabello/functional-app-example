@@ -38,7 +38,16 @@ public class DbAccessFunctions : IDbAccessFunctions
         async p =>
         {
             await using var db = new SqlConnection(getConnectionString());
-            return await db.ExecuteAsync("INSERT INTO Todo (Title, IsCompleted) VALUES (@title, 0)", p);
+            var isThereDuplicatedRecord = await db.QuerySingleAsync<bool>(
+                "SELECT CAST(COUNT(*) AS BIT) FROM Todo WHERE Title = @title", p
+            );
+            if (isThereDuplicatedRecord)
+            {
+                return false;
+            }
+
+            await db.ExecuteAsync("INSERT INTO Todo (Title, IsCompleted) VALUES (@title, 0)", p);
+            return true;
         };
 }
 
