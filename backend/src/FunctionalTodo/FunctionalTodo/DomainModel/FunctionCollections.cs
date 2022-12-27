@@ -1,6 +1,7 @@
 ﻿using System.Data;
 using System.Data.SqlClient;
 using Dapper;
+using DeFuncto;
 using FunctionalTodo.Models;
 
 namespace FunctionalTodo.DomainModel;
@@ -11,6 +12,7 @@ public interface IDbAccessFunctions
     GetAllFromDb GetAllFromDb { get; }
     GetById GetTodoById { get; }
     MarkTodoAsCompleted MarkAsCompleted { get; }
+    FindByTitle FindByTitle { get; }
 }
 
 public interface ISettingsFunctions
@@ -30,6 +32,8 @@ public class DbAccessFunctions : IDbAccessFunctions
     public GetById GetTodoById => BuildGetTodoByIdQuery(settingsFunctions.GetConnectionString);
     public MarkTodoAsCompleted MarkAsCompleted => BuildMarkTodoAsCompletedQuery(settingsFunctions.GetConnectionString);
 
+    public FindByTitle FindByTitle => BuildFindByTitleQuery(settingsFunctions.GetConnectionString);
+
     public GetAllFromDb BuildGetAllFromDb(GetConnectionString getConnectionString) =>
         async () =>
         {
@@ -43,16 +47,20 @@ public class DbAccessFunctions : IDbAccessFunctions
         async p =>
         {
             await using var db = new SqlConnection(getConnectionString());
-            var isThereDuplicatedRecord = await db.QuerySingleAsync<bool>(
-                "SELECT CAST(COUNT(*) AS BIT) FROM Todo WHERE Title = @title", p
-            );
-            if (isThereDuplicatedRecord)
-            {
-                return false;
-            }
+            return await db.ExecuteAsync("INSERT INTO Todo (Title, IsCompleted) VALUES (@title, 0)", p);
+        };
 
-            await db.ExecuteAsync("INSERT INTO Todo (Title, IsCompleted) VALUES (@title, 0)", p);
-            return true;
+    public FindByTitle BuildFindByTitleQuery(GetConnectionString getConnectionString) =>
+        async p =>
+        {
+            await using var db = new SqlConnection(getConnectionString());
+            var parameters = new DynamicParameters();
+            parameters.Add("@Title", p, DbType.String, ParameterDirection.Input);
+            var todo = await db.QueryFirstOrDefaultAsync<TodoListItem>(
+                "SELECT ID, Title, IsCompleted FROM Todo WHERE Title=@Title", parameters
+            );
+            AsyncOption<TodoListItem> result = todo != null ? Some(todo) : None;
+            return result;
         };
 
     public GetById BuildGetTodoByIdQuery(GetConnectionString getConnectionString) =>

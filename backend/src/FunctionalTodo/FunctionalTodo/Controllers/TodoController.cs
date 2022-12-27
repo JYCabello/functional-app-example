@@ -27,7 +27,7 @@ public class TodoController : ControllerBase
     [HttpPost(Name = "Create")]
     [Route("create")]
     public Task<ActionResult> Create(TodoCreation dto) =>
-        Create(dbAccessFunctions.CreateTodo, dto);
+        Create(dbAccessFunctions.CreateTodo, dbAccessFunctions.FindByTitle, dto);
 
     [HttpPost(Name = "GetById")]
     [Route("id/{id:int}")]
@@ -39,11 +39,28 @@ public class TodoController : ControllerBase
     public Task<ActionResult> MarkAsComplete(TodoListItem dto) =>
         MarkAsCompleted(dbAccessFunctions.MarkAsCompleted, dto);
 
-    private async Task<ActionResult> Create(CreateTodo createTodo, TodoCreation dto)
+    private async Task<ActionResult> Create(CreateTodo createTodo, FindByTitle findByTitle, TodoCreation dto)
     {
-        var success = await createTodo(dto);
-        if (success) return Ok();
-        return Conflict();
+        // como hago que not found no sea un error, en este caso es positivo que no lo encontremos
+        var findByTitleResult = await FindByTitleResult(findByTitle, dto.Title);
+        var output =
+            await findByTitleResult.Match(title => Errors.DuplicatedTitle,
+                err => Errors.NotFound);
+
+        // como comparo sin el if, otra función?
+        if (output == Errors.DuplicatedTitle)
+            return Conflict();
+
+        await createTodo(dto);
+        return Ok();
+    }
+
+    // es correcto separar el async result?
+    private static async Task<AsyncResult<string, Errors>> FindByTitleResult(FindByTitle findByTitle, string title)
+    {
+        var titleOutput = await findByTitle(title);
+        return from todo in titleOutput.Result(Errors.NotFound)
+            select todo.Title;
     }
 
     private async Task<ActionResult<IEnumerable<TodoListItem>>> Get(GetAllFromDb gafdb)
