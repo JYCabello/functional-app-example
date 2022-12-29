@@ -52,15 +52,23 @@ public class DbAccessFunctions : IDbAccessFunctions
             await db.ExecuteAsync("INSERT INTO Todo (Title, IsCompleted) VALUES (@title, 0)", p);
             return true;
         };
-    
+
     public GetById BuildGetTodoByIdQuery(GetConnectionString getConnectionString) =>
         async id =>
         {
             await using var db = new SqlConnection(getConnectionString());
             var parameters = new DynamicParameters();
             parameters.Add("@ID", id, DbType.String, ParameterDirection.Input);
-            var todo = await db.QuerySingleAsync<TodoListItem>("SELECT ID, Title, IsCompleted FROM Todo WHERE ID = @ID",
-                parameters);
+            TodoListItem todo;
+            try
+            {
+                todo = await db.QuerySingleAsync<TodoListItem>(
+                    "SELECT ID, Title, IsCompleted FROM Todo WHERE ID = @ID", parameters);
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
 
             return todo;
         };

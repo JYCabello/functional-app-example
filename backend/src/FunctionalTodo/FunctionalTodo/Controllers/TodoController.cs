@@ -28,7 +28,7 @@ public class TodoController : ControllerBase
     [Route("create")]
     public Task<ActionResult> Create(TodoCreation dto) =>
         Create(dbAccessFunctions.CreateTodo, dto);
-    
+
     [HttpPost(Name = "GetById")]
     [Route("id/{id:int}")]
     public Task<ActionResult<TodoListItem>> GetById(int id) =>
@@ -40,16 +40,21 @@ public class TodoController : ControllerBase
         if (success) return Ok();
         return Conflict();
     }
-    
+
     private async Task<ActionResult<IEnumerable<TodoListItem>>> Get(GetAllFromDb gafdb)
     {
         var todos = await gafdb();
         return Ok(todos);
     }
-    
+
     private async Task<ActionResult<TodoListItem>> GetById(GetById gbi, int id)
     {
         var todo = await gbi(id);
-        return Ok(todo);
+        if (todo != null)
+        {
+            return Ok(todo);
+        }
+
+        return NotFound();
     }
 }

@@ -48,7 +48,7 @@ public class ListAcceptance
         Assert.Single(await server.Get<List<TodoListItem>>("Todo", None));
     }
 
-    [Fact(DisplayName = "Gets a non found error when getting a todo by an non-existing id", Skip = "Todo")]
+    [Fact(DisplayName = "Gets a non found error when getting a todo by an non-existing id")]
     public async Task Test3()
     {
         await using var server = await TestServer.Create();
