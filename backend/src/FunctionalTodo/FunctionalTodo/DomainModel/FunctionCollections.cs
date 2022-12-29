@@ -1,4 +1,5 @@
-﻿using System.Data.SqlClient;
+﻿using System.Data;
+using System.Data.SqlClient;
 using Dapper;
 using FunctionalTodo.Models;
 
@@ -8,6 +9,7 @@ public interface IDbAccessFunctions
 {
     CreateTodo CreateTodo { get; }
     GetAllFromDb GetAllFromDb { get; }
+    GetById GetTodoById { get; }
 }
 
 public interface ISettingsFunctions
@@ -24,6 +26,7 @@ public class DbAccessFunctions : IDbAccessFunctions
 
     public GetAllFromDb GetAllFromDb => BuildGetAllFromDb(settingsFunctions.GetConnectionString);
     public CreateTodo CreateTodo => BuildExecuteQuery(settingsFunctions.GetConnectionString);
+    public GetById GetTodoById => BuildGetTodoByIdQuery(settingsFunctions.GetConnectionString);
 
     public GetAllFromDb BuildGetAllFromDb(GetConnectionString getConnectionString) =>
         async () =>
@@ -48,6 +51,18 @@ public class DbAccessFunctions : IDbAccessFunctions
 
             await db.ExecuteAsync("INSERT INTO Todo (Title, IsCompleted) VALUES (@title, 0)", p);
             return true;
+        };
+    
+    public GetById BuildGetTodoByIdQuery(GetConnectionString getConnectionString) =>
+        async id =>
+        {
+            await using var db = new SqlConnection(getConnectionString());
+            var parameters = new DynamicParameters();
+            parameters.Add("@ID", id, DbType.String, ParameterDirection.Input);
+            var todo = await db.QuerySingleAsync<TodoListItem>("SELECT ID, Title, IsCompleted FROM Todo WHERE ID = @ID",
+                parameters);
+
+            return todo;
         };
 }
 
