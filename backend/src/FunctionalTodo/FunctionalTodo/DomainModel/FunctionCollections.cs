@@ -10,6 +10,7 @@ public interface IDbAccessFunctions
     CreateTodo CreateTodo { get; }
     GetAllFromDb GetAllFromDb { get; }
     GetById GetTodoById { get; }
+    MarkTodoAsCompleted MarkAsCompleted { get; }
 }
 
 public interface ISettingsFunctions
@@ -27,6 +28,7 @@ public class DbAccessFunctions : IDbAccessFunctions
     public GetAllFromDb GetAllFromDb => BuildGetAllFromDb(settingsFunctions.GetConnectionString);
     public CreateTodo CreateTodo => BuildExecuteQuery(settingsFunctions.GetConnectionString);
     public GetById GetTodoById => BuildGetTodoByIdQuery(settingsFunctions.GetConnectionString);
+    public MarkTodoAsCompleted MarkAsCompleted => BuildMarkTodoAsCompletedQuery(settingsFunctions.GetConnectionString);
 
     public GetAllFromDb BuildGetAllFromDb(GetConnectionString getConnectionString) =>
         async () =>
@@ -71,6 +73,19 @@ public class DbAccessFunctions : IDbAccessFunctions
             }
 
             return todo;
+        };
+
+    public MarkTodoAsCompleted BuildMarkTodoAsCompletedQuery(GetConnectionString getConnectionString) =>
+        async todo =>
+        {
+            await using var db = new SqlConnection(getConnectionString());
+            var parameters = new DynamicParameters();
+            parameters.Add("@ID", todo.ID, DbType.String, ParameterDirection.Input);
+
+            await db.ExecuteAsync(
+                "UPDATE Todo SET IsCompleted = 'true' WHERE ID = @ID", parameters);
+
+            return todo.ID;
         };
 }
 

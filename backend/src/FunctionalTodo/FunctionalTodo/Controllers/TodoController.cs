@@ -33,6 +33,11 @@ public class TodoController : ControllerBase
     [Route("id/{id:int}")]
     public Task<ActionResult<TodoListItem>> GetById(int id) =>
         GetById(dbAccessFunctions.GetTodoById, id);
+    
+    [HttpPost(Name = "MarkAsComplete")]
+    [Route("completed")]
+    public Task<ActionResult> MarkAsComplete(TodoListItem dto) =>
+        MarkAsCompleted(dbAccessFunctions.MarkAsCompleted, dto);
 
     private async Task<ActionResult> Create(CreateTodo createTodo, TodoCreation dto)
     {
@@ -56,5 +61,11 @@ public class TodoController : ControllerBase
         }
 
         return NotFound();
+    }
+    
+    private async Task<ActionResult> MarkAsCompleted(MarkTodoAsCompleted mtac, TodoListItem dto)
+    {
+        await mtac(dto);
+        return Ok();
     }
 }

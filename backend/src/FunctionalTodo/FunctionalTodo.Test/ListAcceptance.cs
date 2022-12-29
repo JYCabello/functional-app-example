@@ -70,16 +70,17 @@ public class ListAcceptance
         await using var server = await TestServer.Create();
         Assert.Empty(await server.Get<List<TodoListItem>>("todo/list", None));
 
-        var todo = new TodoCreation { Title = "my todo" };
-        await server.Post("todo/create", None, todo);
+        var todoBody = new TodoCreation { Title = "my todo" };
+        await server.Post("todo/create", None, todoBody);
 
         var todoList = await server.Get<List<TodoListItem>>("todo/list", None);
+        var todo = todoList[0];
         Assert.Single(todoList);
-        Assert.False(todoList[0].IsCompleted);
+        Assert.False(todo.IsCompleted);
 
         try
         {
-            await server.Put<TodoListItem>("todo/completed", None, todo);
+            await server.Put("todo/completed", None, todo);
         }
         catch (FlurlHttpException ex)
         {
