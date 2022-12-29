@@ -248,6 +248,12 @@ public class TestServer : IAsyncDisposable, IDisposable
 
     public Task<T> Post<T>(string path, Option<Dictionary<string, string>> queryParams, object body) =>
         BaseReq(path, queryParams).PostJsonAsync(body).Map(r => r.GetJsonAsync<T>());
+    
+    public Task<Unit> Put(string path, Option<Dictionary<string, string>> queryParams, object body) =>
+        BaseReq(path, queryParams).PutJsonAsync(body).Map(_ => unit);
+
+    public Task<T> Put<T>(string path, Option<Dictionary<string, string>> queryParams, object body) =>
+        BaseReq(path, queryParams).PutJsonAsync(body).Map(r => r.GetJsonAsync<T>());
 
     public Task<Unit> PostFile(
         string path,

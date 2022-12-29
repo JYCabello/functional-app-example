@@ -63,4 +63,31 @@ public class ListAcceptance
             Assert.Equal(404, ex.StatusCode);
         }
     }
+
+    [Fact(DisplayName = "Marks a todo item as completed when uncompleted")]
+    public async Task Test4()
+    {
+        await using var server = await TestServer.Create();
+        Assert.Empty(await server.Get<List<TodoListItem>>("todo/list", None));
+
+        var todo = new TodoCreation { Title = "my todo" };
+        await server.Post("todo/create", None, todo);
+
+        var todoList = await server.Get<List<TodoListItem>>("todo/list", None);
+        Assert.Single(todoList);
+        Assert.False(todoList[0].IsCompleted);
+
+        try
+        {
+            await server.Put<TodoListItem>("todo/completed", None, todo);
+        }
+        catch (FlurlHttpException ex)
+        {
+            Assert.Fail("Couldn't mark todo as complete");
+        }
+
+        var todoListAfterMarkingComplete = await server.Get<List<TodoListItem>>("todo/list", None);
+        Assert.Single(todoListAfterMarkingComplete);
+        Assert.True(todoListAfterMarkingComplete[0].IsCompleted);
+    }
 }
