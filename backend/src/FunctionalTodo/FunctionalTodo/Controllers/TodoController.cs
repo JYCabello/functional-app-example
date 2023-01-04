@@ -27,8 +27,8 @@ public class TodoController : ControllerBase
 
     [HttpPost(Name = "Create")]
     [Route("create")]
-    public Task<ActionResult> Create(TodoCreation dto) =>
-        Create(dbAccessFunctions.CreateTodo, dbAccessFunctions.FindByTitle, dto);
+    public ResultHandler<Unit> Create(TodoCreation dto) =>
+        Create2(dbAccessFunctions.CreateTodo, dbAccessFunctions.FindByTitle, dto);
 
     [HttpPost(Name = "GetById")]
     [Route("id/{id:int}")]
@@ -58,6 +58,25 @@ public class TodoController : ControllerBase
 
     private ResultHandler<Unit> Create2(CreateTodo createTodo, FindByTitle findByTitle, TodoCreation dto)
     {
+        AsyncResult<Unit, AlternateFlow> LiftFind(AsyncOption<TodoListItem> todo) =>
+            todo.Match(_ => Error(AlternateFlow.Conflict), () => Result<Unit, AlternateFlow>.Ok(unit));
+
+        AsyncResult<Unit, AlternateFlow> LiftInsert(Task<int> queryResult)
+        {
+            async Task<Result<Unit, AlternateFlow>> GoLift()
+            {
+                await queryResult;
+                return unit;
+            }
+            return GoLift();
+        }
+
+        return
+            from isNewTodo in findByTitle(dto.Title).Apply(LiftFind)
+            from inserted in createTodo(dto).Apply(LiftInsert)
+            select inserted;
+
+        // Esto te lo dejo como referencia, bórralo cuando seas mayor.
         async Task<Result<Unit, AlternateFlow>> Go()
         {
             Option<TodoListItem> todo = await findByTitle(dto.Title);
@@ -69,7 +88,7 @@ public class TodoController : ControllerBase
                 .Match(async _ =>
                     {
                         await createTodo(dto);
-                        return Ok<Unit,AlternateFlow>(unit);
+                        return Ok<Unit, AlternateFlow>(unit);
                     },
                 error => Error<Unit,AlternateFlow>(error).ToTask());
         }
