@@ -26,6 +26,9 @@ public class ResultHandler<TOk> : IActionResult
     public static implicit operator ResultHandler<TOk>(Result<TOk, AlternateFlow> either) =>
         new(either.Async());
 
+    public static implicit operator ResultHandler<TOk>(Task<Result<TOk, AlternateFlow>> either) =>
+        new(either.Async());
+
     public static implicit operator ResultHandler<TOk>(AsyncResult<TOk, AlternateFlow> either) =>
         new(either);
 

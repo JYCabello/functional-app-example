@@ -1,4 +1,5 @@
 using DeFuncto;
+using DeFuncto.Extensions;
 using FunctionalTodo.DomainModel;
 using FunctionalTodo.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -53,6 +54,29 @@ public class TodoController : ControllerBase
 
         await createTodo(dto);
         return Ok();
+    }
+
+    private ResultHandler<Unit> Create2(CreateTodo createTodo, FindByTitle findByTitle, TodoCreation dto)
+    {
+        async Task<Result<Unit, AlternateFlow>> Go()
+        {
+            Option<TodoListItem> todo = await findByTitle(dto.Title);
+
+            Result<Unit, AlternateFlow> todoResult = todo
+                .Match(_ => Error(AlternateFlow.Conflict), () => Result<Unit, AlternateFlow>.Ok(unit));
+            
+            return await todoResult
+                .Match(async _ =>
+                    {
+                        await createTodo(dto);
+                        return Ok<Unit,AlternateFlow>(unit);
+                    },
+                error => Error<Unit,AlternateFlow>(error).ToTask());
+        }
+        // como hago que not found no sea un error, en este caso es positivo que no lo encontremos
+        // así
+        return Go();
+
     }
 
     // es correcto separar el async result?
