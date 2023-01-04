@@ -9,8 +9,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="DeFuncto.Assertions" Version="1.0.3" />
-        <PackageReference Include="DeFuncto.Core" Version="1.0.3" />
+        <PackageReference Include="DeFuncto.Assertions" Version="1.0.4" />
+        <PackageReference Include="DeFuncto.Core" Version="1.0.4" />
         <PackageReference Include="Docker.DotNet" Version="3.125.12" />
         <PackageReference Include="Flurl.Http" Version="3.2.4" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.3.2" />

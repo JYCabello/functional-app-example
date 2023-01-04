@@ -44,38 +44,41 @@ public class DbAccessFunctions : IDbAccessFunctions
         };
 
     public CreateTodo BuildExecuteQuery(GetConnectionString getConnectionString) =>
-        async p =>
+        async t =>
         {
             await using var db = new SqlConnection(getConnectionString());
-            return await db.ExecuteAsync("INSERT INTO Todo (Title, IsCompleted) VALUES (@title, 0)", p);
+            return await db.ExecuteAsync(
+                "INSERT INTO Todo (Title, IsCompleted) VALUES (@Title, 0)",
+                t);
         };
 
     public FindByTitle BuildFindByTitleQuery(GetConnectionString getConnectionString) =>
-        async p =>
+        t =>
         {
-            await using var db = new SqlConnection(getConnectionString());
-            var parameters = new DynamicParameters();
-            parameters.Add("@Title", p, DbType.String, ParameterDirection.Input);
-            var todo = await db.QueryFirstOrDefaultAsync<TodoListItem>(
-                "SELECT ID, Title, IsCompleted FROM Todo WHERE Title=@Title", parameters
-            );
-            AsyncOption<TodoListItem> result = todo != null ? Some(todo) : None;
-            return result;
+            async Task<Option<TodoListItem>> Go()
+            {
+                await using var db = new SqlConnection(getConnectionString());
+                var todo = await db
+                    .QueryFirstOrDefaultAsync<TodoListItem>(
+                        "SELECT ID, Title, IsCompleted FROM Todo WHERE Title=@Title",
+                        new { Title = t });
+                return Optional(todo);
+            }
+
+            return Go();
         };
 
     public GetById BuildGetTodoByIdQuery(GetConnectionString getConnectionString) =>
         async id =>
         {
             await using var db = new SqlConnection(getConnectionString());
-            var parameters = new DynamicParameters();
-            parameters.Add("@ID", id, DbType.String, ParameterDirection.Input);
             TodoListItem todo;
             try
             {
                 todo = await db.QuerySingleAsync<TodoListItem>(
-                    "SELECT ID, Title, IsCompleted FROM Todo WHERE ID = @ID", parameters);
+                    "SELECT ID, Title, IsCompleted FROM Todo WHERE ID = @ID", new { ID = id });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return null;
             }
