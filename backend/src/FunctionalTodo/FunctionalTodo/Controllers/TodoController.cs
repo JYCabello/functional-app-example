@@ -40,22 +40,6 @@ public class TodoController : ControllerBase
     public Task<ActionResult> MarkAsComplete(TodoListItem dto) =>
         MarkAsCompleted(dbAccessFunctions.MarkAsCompleted, dto);
 
-    private async Task<ActionResult> Create(CreateTodo createTodo, FindByTitle findByTitle, TodoCreation dto)
-    {
-        // como hago que not found no sea un error, en este caso es positivo que no lo encontremos
-        var findByTitleResult = await FindByTitleResult(findByTitle, dto.Title);
-        var output =
-            await findByTitleResult.Match(title => Errors.DuplicatedTitle,
-                err => Errors.NotFound);
-
-        // como comparo sin el if, otra función?
-        if (output == Errors.DuplicatedTitle)
-            return Conflict();
-
-        await createTodo(dto);
-        return Ok();
-    }
-
     private ResultHandler<Unit> Create2(CreateTodo createTodo, FindByTitle findByTitle, TodoCreation dto)
     {
         AsyncResult<Unit, AlternateFlow> LiftFind(AsyncOption<TodoListItem> todo) =>
