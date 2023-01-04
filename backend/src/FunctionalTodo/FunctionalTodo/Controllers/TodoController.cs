@@ -96,6 +96,7 @@ public class TodoController : ControllerBase
         return Ok(todos);
     }
 
+    // Haz que esto sea ResultHandler<TodoListItem>
     private async Task<ActionResult<TodoListItem>> GetById(GetById gbi, int id)
     {
         var todo = await gbi(id);
@@ -107,6 +108,9 @@ public class TodoController : ControllerBase
         return NotFound();
     }
     
+    // Haz que esto sea ResultHandler<Unit> y retorne:
+    // Conflict si ya está completo.
+    // NotFound si no existe.
     private async Task<ActionResult> MarkAsCompleted(MarkTodoAsCompleted mtac, TodoListItem dto)
     {
         await mtac(dto);
