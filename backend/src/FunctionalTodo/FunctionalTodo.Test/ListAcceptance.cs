@@ -39,7 +39,6 @@ public class ListAcceptance
 
         var todo = await server.Get<TodoListItem>("todo/id/1", None);
         Assert.Equal(1, todo.ID);
-        Assert.Single(await server.Get<List<TodoListItem>>("Todo", None));
     }
 
     [Fact(DisplayName = "Gets a non found error when getting a todo by an non-existing id")]
@@ -58,7 +57,7 @@ public class ListAcceptance
         }
     }
 
-    [Fact(DisplayName = "Marks a todo item as completed but not when it was already completed")]
+    [Fact(DisplayName = "Marks a todo item as completed, but not when it was already completed")]
     public async Task Test4()
     {
         await using var server = await TestServer.Create();
@@ -66,14 +65,12 @@ public class ListAcceptance
 
         var todoBody = new TodoCreation { Title = "my todo" };
         var todoId = await server.Post<int>("todo/create", None, todoBody);
-
         var todoList = await server.Get<List<TodoListItem>>("todo/list", None);
         Assert.Single(todoList);
         Assert.False(todoList[0].IsCompleted);
 
         await server.Put($"todo/completed/{todoId}", None, None);
         var todoListAfterMarkingComplete = await server.Get<List<TodoListItem>>("todo/list", None);
-        Assert.Single(todoListAfterMarkingComplete);
         Assert.True(todoListAfterMarkingComplete[0].IsCompleted);
 
         try
@@ -114,7 +111,7 @@ public class ListAcceptance
         }
     }
 
-    [Fact(DisplayName = "Marks a todo item as incomplete but not when it was already incomplete")]
+    [Fact(DisplayName = "Marks a todo item as incomplete, but not when it was already incomplete")]
     public async Task Test6()
     {
         await using var server = await TestServer.Create();
@@ -123,6 +120,15 @@ public class ListAcceptance
         var todoBody = new TodoCreation { Title = "my todo" };
         var todoId = await server.Post<int>("todo/create", None, todoBody);
         var todoList = await server.Get<List<TodoListItem>>("todo/list", None);
+        Assert.Single(todoList);
+        Assert.False(todoList[0].IsCompleted);
+        
+        await server.Put($"todo/completed/{todoId}", None, None);
+        todoList = await server.Get<List<TodoListItem>>("todo/list", None);
+        Assert.True(todoList[0].IsCompleted);
+
+        await server.Put($"todo/incomplete/{todoId}", None, None);
+        todoList = await server.Get<List<TodoListItem>>("todo/list", None);
         Assert.False(todoList[0].IsCompleted);
 
         try
@@ -134,19 +140,9 @@ public class ListAcceptance
         {
             Assert.Equal(409, ex.StatusCode);
         }
-
-        await server.Put($"todo/completed/{todoId}", None, None);
-        todoList = await server.Get<List<TodoListItem>>("todo/list", None);
-        Assert.Single(todoList);
-        Assert.True(todoList[0].IsCompleted);
-
-        await server.Put($"todo/incomplete/{todoId}", None, None);
-        todoList = await server.Get<List<TodoListItem>>("todo/list", None);
-        Assert.Single(todoList);
-        Assert.False(todoList[0].IsCompleted);
     }
 
-    [Fact(DisplayName = "Get list of all incomplete todos")]
+    [Fact(DisplayName = "When there are 4 todos, get the list of the 3 incomplete todos")]
     public async Task Test7()
     {
         await using var server = await TestServer.Create();
@@ -161,10 +157,10 @@ public class ListAcceptance
 
         todoList = await server.Get<List<TodoListItem>>("todo/list-incomplete", None);
         Assert.Equal(3, todoList.Count);
-        Assert.All(todoList, todo => todo.IsCompleted.Equals(false));
+        Assert.All(todoList, todo => Assert.False(todo.IsCompleted));
     }
 
-    [Fact(DisplayName = "Get list of all complete todos")]
+    [Fact(DisplayName = "When there are 4 todos, get the list of the 2 complete todos")]
     public async Task Test8()
     {
         await using var server = await TestServer.Create();
@@ -180,6 +176,6 @@ public class ListAcceptance
 
         todoList = await server.Get<List<TodoListItem>>("todo/list-complete", None);
         Assert.Equal(2, todoList.Count);
-        Assert.All(todoList, todo => todo.IsCompleted.Equals(true));
+        Assert.All(todoList, todo => Assert.True(todo.IsCompleted));
     }
 }

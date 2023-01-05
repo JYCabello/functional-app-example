@@ -20,7 +20,7 @@ public class TodoController : ControllerBase
         this.dbAccessFunctions = dbAccessFunctions;
     }
 
-    // Ayuda solo puedo poner un HttpGet, si pongo mas se rompen
+    // Ayuda solo puedo poner un HttpGet, si pongo mas se rompen los tests
     // creo que es problema del TestServer
     [HttpGet(Name = "List")]
     [Route("list")]
