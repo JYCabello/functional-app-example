@@ -80,7 +80,7 @@ public class DbAccessFunctions : IDbAccessFunctions
         {
             await using var db = new SqlConnection(getConnectionString());
             return await db.ExecuteAsync(
-                "INSERT INTO Todo (Title, IsCompleted) VALUES (@Title, 0)",
+                "INSERT INTO Todo (Title, IsCompleted) VALUES (@Title, 0); SELECT SCOPE_IDENTITY();",
                 t);
         };
 

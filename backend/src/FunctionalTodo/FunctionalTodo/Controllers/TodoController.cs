@@ -44,7 +44,7 @@ public class TodoController : ControllerBase
 
     [HttpPost(Name = "Create")]
     [Route("create")]
-    public ResultHandler<Unit> Create(TodoCreation dto) =>
+    public ResultHandler<int> Create(TodoCreation dto) =>
         Create(dbAccessFunctions.CreateTodo, dbAccessFunctions.FindByTitle, dto);
 
     [HttpPut(Name = "MarkAsComplete")]
@@ -60,17 +60,17 @@ public class TodoController : ControllerBase
             dbAccessFunctions.CheckIfCompleted, id);
 
     // hacer que devuelva el id; cambiar tests de mark complete / incomplete por el todoId, y de create para comprovarlo
-    private ResultHandler<Unit> Create(CreateTodo createTodo, FindByTitle findByTitle, TodoCreation dto)
+    private ResultHandler<int> Create(CreateTodo createTodo, FindByTitle findByTitle, TodoCreation dto)
     {
         AsyncResult<Unit, AlternateFlow> LiftFind(AsyncOption<TodoListItem> todo) =>
             todo.Match(_ => Error(AlternateFlow.Conflict), () => Result<Unit, AlternateFlow>.Ok(unit));
 
-        AsyncResult<Unit, AlternateFlow> LiftInsert(Task<int> queryResult)
+        AsyncResult<int, AlternateFlow> LiftInsert(Task<int> queryResult)
         {
-            async Task<Result<Unit, AlternateFlow>> GoLift()
+            async Task<Result<int, AlternateFlow>> GoLift()
             {
-                await queryResult;
-                return unit;
+                var id = await queryResult;
+                return id;
             }
 
             return GoLift();
@@ -82,7 +82,7 @@ public class TodoController : ControllerBase
             select inserted;
 
         // Esto te lo dejo como referencia, bórralo cuando seas mayor.
-        async Task<Result<Unit, AlternateFlow>> Go()
+        /*async Task<Result<Unit, AlternateFlow>> Go()
         {
             Option<TodoListItem> todo = await findByTitle(dto.Title);
 
@@ -98,9 +98,7 @@ public class TodoController : ControllerBase
                     error => Error<Unit, AlternateFlow>(error).ToTask());
         }
 
-        // como hago que not found no sea un error, en este caso es positivo que no lo encontremos
-        // así
-        return Go();
+        return Go();*/
     }
 
     private async Task<ActionResult<IEnumerable<TodoListItem>>> Get(GetAllFromDb gafdb)
