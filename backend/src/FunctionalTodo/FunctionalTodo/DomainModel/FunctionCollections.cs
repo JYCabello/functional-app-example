@@ -87,16 +87,14 @@ public class DbAccessFunctions : IDbAccessFunctions
         };
 
     public MarkTodoAsCompleted BuildMarkTodoAsCompletedQuery(GetConnectionString getConnectionString) =>
-        async todo =>
+        async id =>
         {
             await using var db = new SqlConnection(getConnectionString());
-            var parameters = new DynamicParameters();
-            parameters.Add("@ID", todo.ID, DbType.String, ParameterDirection.Input);
 
             await db.ExecuteAsync(
-                "UPDATE Todo SET IsCompleted = 'true' WHERE ID = @ID", parameters);
+                "UPDATE Todo SET IsCompleted = 'true' WHERE ID = @ID", new {ID = id});
 
-            return todo.ID;
+            return id;
         };
 }
 

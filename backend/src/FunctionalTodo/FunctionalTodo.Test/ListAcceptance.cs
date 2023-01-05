@@ -65,7 +65,7 @@ public class ListAcceptance
         }
     }
 
-    [Fact(DisplayName = "Marks a todo item as completed when uncompleted")]
+    [Fact(DisplayName = "Marks a todo item as completed but not when it was already completed")]
     public async Task Test4()
     {
         await using var server = await TestServer.Create();
@@ -75,13 +75,14 @@ public class ListAcceptance
         await server.Post("todo/create", None, todoBody);
 
         var todoList = await server.Get<List<TodoListItem>>("todo/list", None);
+        var todoId = todoList[0].ID;
         var todo = todoList[0];
         Assert.Single(todoList);
         Assert.False(todo.IsCompleted);
 
         try
         {
-            await server.Put("todo/completed", None, todo);
+            await server.Put($"todo/completed/{todoId}", None, None);
         }
         catch (FlurlHttpException ex)
         {
@@ -91,5 +92,30 @@ public class ListAcceptance
         var todoListAfterMarkingComplete = await server.Get<List<TodoListItem>>("todo/list", None);
         Assert.Single(todoListAfterMarkingComplete);
         Assert.True(todoListAfterMarkingComplete[0].IsCompleted);
+        
+        try
+        {
+            await server.Put($"todo/completed/{todoId}", None, None);
+        }
+        catch (FlurlHttpException ex)
+        {
+            Assert.Equal(409, ex.StatusCode);
+        }
+    }
+    
+    [Fact(DisplayName = "Can't mark a todo item as completed if it doesn't exist")]
+    public async Task Test5()
+    {
+        await using var server = await TestServer.Create();
+        Assert.Empty(await server.Get<List<TodoListItem>>("todo/list", None));
+
+        try
+        {
+            await server.Put("todo/completed/3", None, None);
+        }
+        catch (FlurlHttpException ex)
+        {
+            Assert.Equal(404, ex.StatusCode);
+        }
     }
 }

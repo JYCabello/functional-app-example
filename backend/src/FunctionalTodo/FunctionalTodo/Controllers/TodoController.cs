@@ -28,7 +28,7 @@ public class TodoController : ControllerBase
     [HttpPost(Name = "Create")]
     [Route("create")]
     public ResultHandler<Unit> Create(TodoCreation dto) =>
-        Create2(dbAccessFunctions.CreateTodo, dbAccessFunctions.FindByTitle, dto);
+        Create(dbAccessFunctions.CreateTodo, dbAccessFunctions.FindByTitle, dto);
 
     [HttpPost(Name = "GetById")]
     [Route("id/{id:int}")]
@@ -36,11 +36,11 @@ public class TodoController : ControllerBase
         GetById(dbAccessFunctions.GetTodoById, id);
     
     [HttpPost(Name = "MarkAsComplete")]
-    [Route("completed")]
-    public Task<ActionResult> MarkAsComplete(TodoListItem dto) =>
-        MarkAsCompleted(dbAccessFunctions.MarkAsCompleted, dto);
+    [Route("completed/{id:int}")]
+    public Task<ActionResult> MarkAsComplete(int id) =>
+        MarkAsCompleted(dbAccessFunctions.MarkAsCompleted, id);
 
-    private ResultHandler<Unit> Create2(CreateTodo createTodo, FindByTitle findByTitle, TodoCreation dto)
+    private ResultHandler<Unit> Create(CreateTodo createTodo, FindByTitle findByTitle, TodoCreation dto)
     {
         AsyncResult<Unit, AlternateFlow> LiftFind(AsyncOption<TodoListItem> todo) =>
             todo.Match(_ => Error(AlternateFlow.Conflict), () => Result<Unit, AlternateFlow>.Ok(unit));
@@ -82,14 +82,6 @@ public class TodoController : ControllerBase
 
     }
 
-    // es correcto separar el async result?
-    private static async Task<AsyncResult<string, Errors>> FindByTitleResult(FindByTitle findByTitle, string title)
-    {
-        var titleOutput = await findByTitle(title);
-        return from todo in titleOutput.Result(Errors.NotFound)
-            select todo.Title;
-    }
-
     private async Task<ActionResult<IEnumerable<TodoListItem>>> Get(GetAllFromDb gafdb)
     {
         var todos = await gafdb();
@@ -111,9 +103,9 @@ public class TodoController : ControllerBase
     // Haz que esto sea ResultHandler<Unit> y retorne:
     // Conflict si ya está completo.
     // NotFound si no existe.
-    private async Task<ActionResult> MarkAsCompleted(MarkTodoAsCompleted mtac, TodoListItem dto)
+    private async Task<ActionResult> MarkAsCompleted(MarkTodoAsCompleted mtac, int id)
     {
-        await mtac(dto);
+        await mtac(id);
         return Ok();
     }
 }
