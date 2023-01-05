@@ -13,6 +13,7 @@ public interface IDbAccessFunctions
     GetById GetTodoById { get; }
     MarkTodoAsCompleted MarkAsCompleted { get; }
     FindByTitle FindByTitle { get; }
+    FindById FindById { get; }
 }
 
 public interface ISettingsFunctions
@@ -31,7 +32,7 @@ public class DbAccessFunctions : IDbAccessFunctions
     public CreateTodo CreateTodo => BuildExecuteQuery(settingsFunctions.GetConnectionString);
     public GetById GetTodoById => BuildGetTodoByIdQuery(settingsFunctions.GetConnectionString);
     public MarkTodoAsCompleted MarkAsCompleted => BuildMarkTodoAsCompletedQuery(settingsFunctions.GetConnectionString);
-
+    public FindById FindById => BuildFindByIdQuery(settingsFunctions.GetConnectionString);
     public FindByTitle FindByTitle => BuildFindByTitleQuery(settingsFunctions.GetConnectionString);
 
     public GetAllFromDb BuildGetAllFromDb(GetConnectionString getConnectionString) =>
@@ -67,6 +68,22 @@ public class DbAccessFunctions : IDbAccessFunctions
 
             return Go();
         };
+    
+    public FindById BuildFindByIdQuery(GetConnectionString getConnectionString) =>
+        id =>
+        {
+            async Task<Option<TodoListItem>> Go()
+            {
+                await using var db = new SqlConnection(getConnectionString());
+                var todo = await db
+                    .QueryFirstOrDefaultAsync<TodoListItem>(
+                        "SELECT ID, Title, IsCompleted FROM Todo WHERE ID = @ID",
+                        new { ID = id });
+                return Optional(todo);
+            }
+
+            return Go();
+        };
 
     public GetById BuildGetTodoByIdQuery(GetConnectionString getConnectionString) =>
         async id =>
@@ -92,7 +109,7 @@ public class DbAccessFunctions : IDbAccessFunctions
             await using var db = new SqlConnection(getConnectionString());
 
             await db.ExecuteAsync(
-                "UPDATE Todo SET IsCompleted = 'true' WHERE ID = @ID", new {ID = id});
+                "UPDATE Todo SET IsCompleted = 'true' WHERE ID = @ID", new { ID = id });
 
             return id;
         };

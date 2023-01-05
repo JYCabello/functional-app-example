@@ -34,11 +34,11 @@ public class TodoController : ControllerBase
     [Route("id/{id:int}")]
     public Task<ActionResult<TodoListItem>> GetById(int id) =>
         GetById(dbAccessFunctions.GetTodoById, id);
-    
+
     [HttpPost(Name = "MarkAsComplete")]
     [Route("completed/{id:int}")]
     public Task<ActionResult> MarkAsComplete(int id) =>
-        MarkAsCompleted(dbAccessFunctions.MarkAsCompleted, id);
+        MarkAsCompleted(dbAccessFunctions.MarkAsCompleted, dbAccessFunctions.FindById, id);
 
     private ResultHandler<Unit> Create(CreateTodo createTodo, FindByTitle findByTitle, TodoCreation dto)
     {
@@ -52,6 +52,7 @@ public class TodoController : ControllerBase
                 await queryResult;
                 return unit;
             }
+
             return GoLift();
         }
 
@@ -67,19 +68,19 @@ public class TodoController : ControllerBase
 
             Result<Unit, AlternateFlow> todoResult = todo
                 .Match(_ => Error(AlternateFlow.Conflict), () => Result<Unit, AlternateFlow>.Ok(unit));
-            
+
             return await todoResult
                 .Match(async _ =>
                     {
                         await createTodo(dto);
                         return Ok<Unit, AlternateFlow>(unit);
                     },
-                error => Error<Unit,AlternateFlow>(error).ToTask());
+                    error => Error<Unit, AlternateFlow>(error).ToTask());
         }
+
         // como hago que not found no sea un error, en este caso es positivo que no lo encontremos
         // así
         return Go();
-
     }
 
     private async Task<ActionResult<IEnumerable<TodoListItem>>> Get(GetAllFromDb gafdb)
@@ -99,12 +100,14 @@ public class TodoController : ControllerBase
 
         return NotFound();
     }
-    
+
     // Haz que esto sea ResultHandler<Unit> y retorne:
     // Conflict si ya está completo.
     // NotFound si no existe.
-    private async Task<ActionResult> MarkAsCompleted(MarkTodoAsCompleted mtac, int id)
+    private async Task<ActionResult> MarkAsCompleted(MarkTodoAsCompleted mtac, FindById findById, int id)
     {
+        var found = await findById(id);
+        if (found.IsNone) return NotFound();
         await mtac(id);
         return Ok();
     }

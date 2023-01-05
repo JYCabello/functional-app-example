@@ -96,6 +96,7 @@ public class ListAcceptance
         try
         {
             await server.Put($"todo/completed/{todoId}", None, None);
+            Assert.Fail("Should not have updated completed todo");
         }
         catch (FlurlHttpException ex)
         {
@@ -112,6 +113,8 @@ public class ListAcceptance
         try
         {
             await server.Put("todo/completed/3", None, None);
+            Assert.Fail("Should not have found todo");
+
         }
         catch (FlurlHttpException ex)
         {
