@@ -12,6 +12,7 @@ public interface IDbAccessFunctions
     GetAllFromDb GetAllFromDb { get; }
     GetById GetTodoById { get; }
     MarkTodoAsCompleted MarkAsCompleted { get; }
+    CheckIfCompleted CheckIfCompleted { get; }
     FindByTitle FindByTitle { get; }
     FindById FindById { get; }
 }
@@ -32,6 +33,7 @@ public class DbAccessFunctions : IDbAccessFunctions
     public CreateTodo CreateTodo => BuildExecuteQuery(settingsFunctions.GetConnectionString);
     public GetById GetTodoById => BuildGetTodoByIdQuery(settingsFunctions.GetConnectionString);
     public MarkTodoAsCompleted MarkAsCompleted => BuildMarkTodoAsCompletedQuery(settingsFunctions.GetConnectionString);
+    public CheckIfCompleted CheckIfCompleted => BuildCheckIfCompleted(settingsFunctions.GetConnectionString);
     public FindById FindById => BuildFindByIdQuery(settingsFunctions.GetConnectionString);
     public FindByTitle FindByTitle => BuildFindByTitleQuery(settingsFunctions.GetConnectionString);
 
@@ -112,6 +114,14 @@ public class DbAccessFunctions : IDbAccessFunctions
                 "UPDATE Todo SET IsCompleted = 'true' WHERE ID = @ID", new { ID = id });
 
             return id;
+        };
+    
+    public CheckIfCompleted BuildCheckIfCompleted(GetConnectionString getConnectionString) =>
+        async id =>
+        {
+            await using var db = new SqlConnection(getConnectionString());
+            return await db.QuerySingleAsync<bool>(
+                    "SELECT CAST(IsCompleted AS BIT) FROM Todo WHERE ID = @ID", new { ID = id });
         };
 }
 

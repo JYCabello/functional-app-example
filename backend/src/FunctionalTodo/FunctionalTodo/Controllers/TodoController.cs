@@ -38,7 +38,7 @@ public class TodoController : ControllerBase
     [HttpPost(Name = "MarkAsComplete")]
     [Route("completed/{id:int}")]
     public Task<ActionResult> MarkAsComplete(int id) =>
-        MarkAsCompleted(dbAccessFunctions.MarkAsCompleted, dbAccessFunctions.FindById, id);
+        MarkAsCompleted(dbAccessFunctions.MarkAsCompleted, dbAccessFunctions.FindById, dbAccessFunctions.CheckIfCompleted ,id);
 
     private ResultHandler<Unit> Create(CreateTodo createTodo, FindByTitle findByTitle, TodoCreation dto)
     {
@@ -102,12 +102,12 @@ public class TodoController : ControllerBase
     }
 
     // Haz que esto sea ResultHandler<Unit> y retorne:
-    // Conflict si ya está completo.
-    // NotFound si no existe.
-    private async Task<ActionResult> MarkAsCompleted(MarkTodoAsCompleted mtac, FindById findById, int id)
+    private async Task<ActionResult> MarkAsCompleted(MarkTodoAsCompleted mtac, FindById findById, CheckIfCompleted checkIfCompleted,int id)
     {
         var found = await findById(id);
         if (found.IsNone) return NotFound();
+        var isAlreadyCompleted = await checkIfCompleted(id);
+        if (isAlreadyCompleted) return Conflict();
         await mtac(id);
         return Ok();
     }
