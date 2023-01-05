@@ -59,7 +59,7 @@ public class TodoController : ControllerBase
         MarkAsIncomplete(dbAccessFunctions.MarkTodoAsIncomplete, dbAccessFunctions.FindById,
             dbAccessFunctions.CheckIfCompleted, id);
 
-    // hacer que devuelva el id; cambiar tests de mark complete / incomplete por el todoId, y de create para comprovarlo
+    // En que momento se devuelve la clase ResultHandler?
     private ResultHandler<int> Create(CreateTodo createTodo, FindByTitle findByTitle, TodoCreation dto)
     {
         AsyncResult<Unit, AlternateFlow> LiftFind(AsyncOption<TodoListItem> todo) =>
@@ -80,7 +80,6 @@ public class TodoController : ControllerBase
             from isNewTodo in findByTitle(dto.Title).Apply(LiftFind)
             from inserted in createTodo(dto).Apply(LiftInsert)
             select inserted;
-
         // Esto te lo dejo como referencia, bórralo cuando seas mayor.
         /*async Task<Result<Unit, AlternateFlow>> Go()
         {
@@ -112,7 +111,7 @@ public class TodoController : ControllerBase
         var todos = await gaifdb();
         return Ok(todos);
     }
-    
+
     private async Task<ActionResult<IEnumerable<TodoListItem>>> GetComplete(GetAllCompleteFromDb gacfdb)
     {
         var todos = await gacfdb();
@@ -122,7 +121,6 @@ public class TodoController : ControllerBase
     // Haz que esto sea ResultHandler<TodoListItem>
     private async Task<ActionResult<TodoListItem>> GetById(GetById gbi, int id)
     {
-        
         var todo = await gbi(id);
         if (todo != null)
         {

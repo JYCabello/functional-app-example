@@ -13,8 +13,9 @@ public class ListAcceptance
     {
         await using var server = await TestServer.Create();
         Assert.Empty(await server.Get<List<TodoListItem>>("todo/list", None));
-        var id = await server.Post("todo/create", None, new TodoCreation { Title = "my todo" });
-        Assert.Collection(await server.Get<List<TodoListItem>>("todo/list", None), todo => todo.ID.Equals(id));
+        var id = await server.Post<int>("todo/create", None, new TodoCreation { Title = "my todo" });
+        var list = await server.Get<List<TodoListItem>>("todo/list", None);
+        Assert.Collection(list, todo => Assert.Equal(todo.ID, id));
         try
         {
             await server.Post("todo/create", None, new TodoCreation { Title = "my todo" });
@@ -64,7 +65,7 @@ public class ListAcceptance
         Assert.Empty(await server.Get<List<TodoListItem>>("todo/list", None));
 
         var todoBody = new TodoCreation { Title = "my todo" };
-        var todoId = await server.Post("todo/create", None, todoBody);
+        var todoId = await server.Post<int>("todo/create", None, todoBody);
 
         var todoList = await server.Get<List<TodoListItem>>("todo/list", None);
         Assert.Single(todoList);
@@ -120,7 +121,7 @@ public class ListAcceptance
         Assert.Empty(await server.Get<List<TodoListItem>>("todo/list", None));
 
         var todoBody = new TodoCreation { Title = "my todo" };
-        var todoId = await server.Post("todo/create", None, todoBody);
+        var todoId = await server.Post<int>("todo/create", None, todoBody);
         var todoList = await server.Get<List<TodoListItem>>("todo/list", None);
         Assert.False(todoList[0].IsCompleted);
 
