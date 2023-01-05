@@ -13,7 +13,7 @@ public interface IDbAccessFunctions
     GetAllIncompleteFromDb GetAllIncompleteFromDb { get; }
     GetAllCompleteFromDb GetAllCompleteFromDb { get; }
     GetById GetTodoById { get; }
-    MarkTodoAsCompleted MarkAsCompleted { get; }
+    MarkTodoAsComplete MarkAsComplete { get; }
     MarkTodoAsIncomplete MarkTodoAsIncomplete { get; }
     CheckIfCompleted CheckIfCompleted { get; }
     FindByTitle FindByTitle { get; }
@@ -40,7 +40,7 @@ public class DbAccessFunctions : IDbAccessFunctions
         BuildGetAllCompleteFromDb(settingsFunctions.GetConnectionString);
     public CreateTodo CreateTodo => BuildExecuteQuery(settingsFunctions.GetConnectionString);
     public GetById GetTodoById => BuildGetTodoByIdQuery(settingsFunctions.GetConnectionString);
-    public MarkTodoAsCompleted MarkAsCompleted => BuildMarkTodoAsCompletedQuery(settingsFunctions.GetConnectionString);
+    public MarkTodoAsComplete MarkAsComplete => BuildMarkTodoAsCompleteQuery(settingsFunctions.GetConnectionString);
 
     public MarkTodoAsIncomplete MarkTodoAsIncomplete =>
         BuildMarkTodoAsIncompleteQuery(settingsFunctions.GetConnectionString);
@@ -134,7 +134,7 @@ public class DbAccessFunctions : IDbAccessFunctions
             return todo;
         };
 
-    public MarkTodoAsCompleted BuildMarkTodoAsCompletedQuery(GetConnectionString getConnectionString) =>
+    public MarkTodoAsComplete BuildMarkTodoAsCompleteQuery(GetConnectionString getConnectionString) =>
         async id =>
         {
             await using var db = new SqlConnection(getConnectionString());

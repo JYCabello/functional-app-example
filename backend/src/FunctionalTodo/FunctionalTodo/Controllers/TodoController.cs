@@ -50,7 +50,7 @@ public class TodoController : ControllerBase
     [HttpPut(Name = "MarkAsComplete")]
     [Route("completed/{id:int}")]
     public Task<ActionResult> MarkAsComplete(int id) =>
-        MarkAsCompleted(dbAccessFunctions.MarkAsCompleted, dbAccessFunctions.FindById,
+        MarkAsComplete(dbAccessFunctions.MarkAsComplete, dbAccessFunctions.FindById,
             dbAccessFunctions.CheckIfCompleted, id);
 
     [HttpPut(Name = "MarkAsIncomplete")]
@@ -131,7 +131,7 @@ public class TodoController : ControllerBase
     }
 
     // Haz que esto sea ResultHandler<Unit> y retorne:
-    private async Task<ActionResult> MarkAsCompleted(MarkTodoAsCompleted mtac, FindById findById,
+    private async Task<ActionResult> MarkAsComplete(MarkTodoAsComplete mtac, FindById findById,
         CheckIfCompleted checkIfCompleted, int id)
     {
         var found = await findById(id);
