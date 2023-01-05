@@ -11,6 +11,7 @@ public interface IDbAccessFunctions
     CreateTodo CreateTodo { get; }
     GetAllFromDb GetAllFromDb { get; }
     GetAllIncompleteFromDb GetAllIncompleteFromDb { get; }
+    GetAllCompleteFromDb GetAllCompleteFromDb { get; }
     GetById GetTodoById { get; }
     MarkTodoAsCompleted MarkAsCompleted { get; }
     MarkTodoAsIncomplete MarkTodoAsIncomplete { get; }
@@ -35,6 +36,8 @@ public class DbAccessFunctions : IDbAccessFunctions
 
     public GetAllIncompleteFromDb GetAllIncompleteFromDb =>
         BuildGetAllIncompleteFromDb(settingsFunctions.GetConnectionString);
+    public GetAllCompleteFromDb GetAllCompleteFromDb =>
+        BuildGetAllCompleteFromDb(settingsFunctions.GetConnectionString);
     public CreateTodo CreateTodo => BuildExecuteQuery(settingsFunctions.GetConnectionString);
     public GetById GetTodoById => BuildGetTodoByIdQuery(settingsFunctions.GetConnectionString);
     public MarkTodoAsCompleted MarkAsCompleted => BuildMarkTodoAsCompletedQuery(settingsFunctions.GetConnectionString);
@@ -60,6 +63,15 @@ public class DbAccessFunctions : IDbAccessFunctions
             await using var db = new SqlConnection(getConnectionString());
             return await db.QueryAsync<TodoListItem>(
                 "SELECT ID, Title, IsCompleted FROM Todo WHERE IsCompleted='false'"
+            );
+        };
+    
+    public GetAllCompleteFromDb BuildGetAllCompleteFromDb(GetConnectionString getConnectionString) =>
+        async () =>
+        {
+            await using var db = new SqlConnection(getConnectionString());
+            return await db.QueryAsync<TodoListItem>(
+                "SELECT ID, Title, IsCompleted FROM Todo WHERE IsCompleted='true'"
             );
         };
 

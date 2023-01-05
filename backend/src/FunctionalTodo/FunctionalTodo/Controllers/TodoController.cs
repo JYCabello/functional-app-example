@@ -20,33 +20,39 @@ public class TodoController : ControllerBase
         this.dbAccessFunctions = dbAccessFunctions;
     }
 
+    // Ayuda solo puedo poner un HttpGet, si pongo mas se rompen
     [HttpGet(Name = "List")]
     [Route("list")]
     public Task<ActionResult<IEnumerable<TodoListItem>>> Get() =>
         Get(dbAccessFunctions.GetAllFromDb);
-    
+
     [HttpPost(Name = "ListIncomplete")]
     [Route("list-incomplete")]
     public Task<ActionResult<IEnumerable<TodoListItem>>> GetIncomplete() =>
         GetIncomplete(dbAccessFunctions.GetAllIncompleteFromDb);
 
-    [HttpPost(Name = "Create")]
-    [Route("create")]
-    public ResultHandler<Unit> Create(TodoCreation dto) =>
-        Create(dbAccessFunctions.CreateTodo, dbAccessFunctions.FindByTitle, dto);
+    [HttpPost(Name = "ListComplete")]
+    [Route("list-complete")]
+    public Task<ActionResult<IEnumerable<TodoListItem>>> GetComplete() =>
+        GetComplete(dbAccessFunctions.GetAllCompleteFromDb);
 
     [HttpPost(Name = "GetById")]
     [Route("id/{id:int}")]
     public Task<ActionResult<TodoListItem>> GetById(int id) =>
         GetById(dbAccessFunctions.GetTodoById, id);
 
-    [HttpPost(Name = "MarkAsComplete")]
+    [HttpPost(Name = "Create")]
+    [Route("create")]
+    public ResultHandler<Unit> Create(TodoCreation dto) =>
+        Create(dbAccessFunctions.CreateTodo, dbAccessFunctions.FindByTitle, dto);
+
+    [HttpPut(Name = "MarkAsComplete")]
     [Route("completed/{id:int}")]
     public Task<ActionResult> MarkAsComplete(int id) =>
         MarkAsCompleted(dbAccessFunctions.MarkAsCompleted, dbAccessFunctions.FindById,
             dbAccessFunctions.CheckIfCompleted, id);
 
-    [HttpPost(Name = "MarkAsIncomplete")]
+    [HttpPut(Name = "MarkAsIncomplete")]
     [Route("incomplete/{id:int}")]
     public Task<ActionResult> MarkAsIncomplete(int id) =>
         MarkAsIncomplete(dbAccessFunctions.MarkTodoAsIncomplete, dbAccessFunctions.FindById,
@@ -101,10 +107,16 @@ public class TodoController : ControllerBase
         var todos = await gafdb();
         return Ok(todos);
     }
-    
+
     private async Task<ActionResult<IEnumerable<TodoListItem>>> GetIncomplete(GetAllIncompleteFromDb gaifdb)
     {
         var todos = await gaifdb();
+        return Ok(todos);
+    }
+    
+    private async Task<ActionResult<IEnumerable<TodoListItem>>> GetComplete(GetAllCompleteFromDb gacfdb)
+    {
+        var todos = await gacfdb();
         return Ok(todos);
     }
 
