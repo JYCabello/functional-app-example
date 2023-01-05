@@ -8,6 +8,7 @@ public delegate Task<int> CreateTodo(TodoCreation parameters);
 public delegate Task<TodoListItem> GetByTitle(string title);
 public delegate Task<TodoListItem?> GetById(int id);
 public delegate Task<int> MarkTodoAsCompleted(int id);
+public delegate Task<int> MarkTodoAsIncomplete(int id);
 public delegate Task<bool> CheckIfCompleted(int id);
 public delegate AsyncOption<TodoListItem> FindByTitle(string title);
 public delegate AsyncOption<TodoListItem> FindById(int id);

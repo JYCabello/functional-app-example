@@ -38,8 +38,16 @@ public class TodoController : ControllerBase
     [HttpPost(Name = "MarkAsComplete")]
     [Route("completed/{id:int}")]
     public Task<ActionResult> MarkAsComplete(int id) =>
-        MarkAsCompleted(dbAccessFunctions.MarkAsCompleted, dbAccessFunctions.FindById, dbAccessFunctions.CheckIfCompleted ,id);
+        MarkAsCompleted(dbAccessFunctions.MarkAsCompleted, dbAccessFunctions.FindById,
+            dbAccessFunctions.CheckIfCompleted, id);
 
+    [HttpPost(Name = "MarkAsIncomplete")]
+    [Route("incomplete/{id:int}")]
+    public Task<ActionResult> MarkAsIncomplete(int id) =>
+        MarkAsIncomplete(dbAccessFunctions.MarkTodoAsIncomplete, dbAccessFunctions.FindById,
+            dbAccessFunctions.CheckIfCompleted, id);
+
+    // hacer que devuelva el id; cambiar tests de mark complete / incomplete por el todoId, y de create para comprovarlo
     private ResultHandler<Unit> Create(CreateTodo createTodo, FindByTitle findByTitle, TodoCreation dto)
     {
         AsyncResult<Unit, AlternateFlow> LiftFind(AsyncOption<TodoListItem> todo) =>
@@ -102,13 +110,26 @@ public class TodoController : ControllerBase
     }
 
     // Haz que esto sea ResultHandler<Unit> y retorne:
-    private async Task<ActionResult> MarkAsCompleted(MarkTodoAsCompleted mtac, FindById findById, CheckIfCompleted checkIfCompleted,int id)
+    private async Task<ActionResult> MarkAsCompleted(MarkTodoAsCompleted mtac, FindById findById,
+        CheckIfCompleted checkIfCompleted, int id)
     {
         var found = await findById(id);
         if (found.IsNone) return NotFound();
         var isAlreadyCompleted = await checkIfCompleted(id);
         if (isAlreadyCompleted) return Conflict();
         await mtac(id);
+        return Ok();
+    }
+
+    // Haz que esto sea ResultHandler<Unit> y retorne:
+    private async Task<ActionResult> MarkAsIncomplete(MarkTodoAsIncomplete mtai, FindById findById,
+        CheckIfCompleted checkIfCompleted, int id)
+    {
+        var found = await findById(id);
+        if (found.IsNone) return NotFound();
+        var isAlreadyCompleted = await checkIfCompleted(id);
+        if (!isAlreadyCompleted) return Conflict();
+        await mtai(id);
         return Ok();
     }
 }

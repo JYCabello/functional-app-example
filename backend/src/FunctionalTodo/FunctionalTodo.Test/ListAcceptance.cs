@@ -104,7 +104,7 @@ public class ListAcceptance
         }
     }
     
-    [Fact(DisplayName = "Can't mark a todo item as completed if it doesn't exist")]
+    [Fact(DisplayName = "Can't mark a todo item as completed or incomplete if it doesn't exist")]
     public async Task Test5()
     {
         await using var server = await TestServer.Create();
@@ -119,6 +119,58 @@ public class ListAcceptance
         catch (FlurlHttpException ex)
         {
             Assert.Equal(404, ex.StatusCode);
+        }
+        
+        try
+        {
+            await server.Put("todo/incomplete/3", None, None);
+            Assert.Fail("Should not have found todo");
+
+        }
+        catch (FlurlHttpException ex)
+        {
+            Assert.Equal(404, ex.StatusCode);
+        }
+    }
+    
+    [Fact(DisplayName = "Marks a todo item as incomplete but not when it was already incomplete")]
+    public async Task Test6()
+    {
+        await using var server = await TestServer.Create();
+        Assert.Empty(await server.Get<List<TodoListItem>>("todo/list", None));
+
+        var todoBody = new TodoCreation { Title = "my todo" };
+        await server.Post("todo/create", None, todoBody);
+        var todoList = await server.Get<List<TodoListItem>>("todo/list", None);
+        var todoId = todoList[0].ID;
+        await server.Put($"todo/completed/{todoId}", None, None);
+        
+        todoList = await server.Get<List<TodoListItem>>("todo/list", None);
+        var todo = todoList[0];
+        Assert.Single(todoList);
+        Assert.True(todo.IsCompleted);
+
+        try
+        {
+            await server.Put($"todo/incomplete/{todoId}", None, None);
+        }
+        catch (FlurlHttpException ex)
+        {
+            Assert.Fail("Couldn't mark todo as complete");
+        }
+
+        var todoListAfterMarkingIncomplete = await server.Get<List<TodoListItem>>("todo/list", None);
+        Assert.Single(todoListAfterMarkingIncomplete);
+        Assert.False(todoListAfterMarkingIncomplete[0].IsCompleted);
+        
+        try
+        {
+            await server.Put($"todo/incomplete/{todoId}", None, None);
+            Assert.Fail("Should not have updated incomplete todo");
+        }
+        catch (FlurlHttpException ex)
+        {
+            Assert.Equal(409, ex.StatusCode);
         }
     }
 }
