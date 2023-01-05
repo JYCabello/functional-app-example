@@ -4,6 +4,7 @@ using FunctionalTodo.Models;
 namespace FunctionalTodo.DomainModel;
 
 public delegate Task<IEnumerable<TodoListItem>> GetAllFromDb();
+public delegate Task<IEnumerable<TodoListItem>> GetAllIncompleteFromDb();
 public delegate Task<int> CreateTodo(TodoCreation parameters);
 public delegate Task<TodoListItem> GetByTitle(string title);
 public delegate Task<TodoListItem?> GetById(int id);

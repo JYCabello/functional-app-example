@@ -173,4 +173,29 @@ public class ListAcceptance
             Assert.Equal(409, ex.StatusCode);
         }
     }
+    
+    [Fact(DisplayName = "Get list of all incomplete todos")]
+    public async Task Test7()
+    {
+        await using var server = await TestServer.Create();
+        Assert.Empty(await server.Get<List<TodoListItem>>("todo/list", None));
+        await server.Post("todo/create", None, new TodoCreation { Title = "my todo 1" });
+        await server.Post("todo/create", None, new TodoCreation { Title = "my todo 2" });
+        await server.Post("todo/create", None, new TodoCreation { Title = "my todo 3" });
+        await server.Post("todo/create", None, new TodoCreation { Title = "my todo 4" });
+        await server.Put("todo/completed/2", None, None);
+        var todoList = await server.Get<List<TodoListItem>>("todo/list", None);
+        Assert.Equal(4, todoList.Count);
+        try
+        {
+            todoList = await server.Get<List<TodoListItem>>("todo/list-incomplete", None);
+        }
+        catch (FlurlHttpException ex)
+        {
+            Assert.Fail("Couldn't get list");
+        }
+
+        Assert.Equal(3, todoList.Count);
+        Assert.All(todoList, todo => todo.IsCompleted.Equals(false));
+    }
 }

@@ -24,6 +24,11 @@ public class TodoController : ControllerBase
     [Route("list")]
     public Task<ActionResult<IEnumerable<TodoListItem>>> Get() =>
         Get(dbAccessFunctions.GetAllFromDb);
+    
+    [HttpPost(Name = "ListIncomplete")]
+    [Route("list-incomplete")]
+    public Task<ActionResult<IEnumerable<TodoListItem>>> GetIncomplete() =>
+        GetIncomplete(dbAccessFunctions.GetAllIncompleteFromDb);
 
     [HttpPost(Name = "Create")]
     [Route("create")]
@@ -96,8 +101,15 @@ public class TodoController : ControllerBase
         var todos = await gafdb();
         return Ok(todos);
     }
+    
+    private async Task<ActionResult<IEnumerable<TodoListItem>>> GetIncomplete(GetAllIncompleteFromDb gaifdb)
+    {
+        var todos = await gaifdb();
+        return Ok(todos);
+    }
 
     // Haz que esto sea ResultHandler<TodoListItem>
+    // no debe ser nullable, debe lanzar error en repositorio
     private async Task<ActionResult<TodoListItem>> GetById(GetById gbi, int id)
     {
         var todo = await gbi(id);
