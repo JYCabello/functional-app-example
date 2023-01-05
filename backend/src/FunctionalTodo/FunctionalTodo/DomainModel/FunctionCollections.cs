@@ -145,7 +145,6 @@ public class DbAccessFunctions : IDbAccessFunctions
             return id;
         };
     
-    
     public MarkTodoAsIncomplete BuildMarkTodoAsIncompleteQuery(GetConnectionString getConnectionString) =>
         async id =>
         {

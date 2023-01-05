@@ -21,6 +21,7 @@ public class TodoController : ControllerBase
     }
 
     // Ayuda solo puedo poner un HttpGet, si pongo mas se rompen
+    // creo que es problema del TestServer
     [HttpGet(Name = "List")]
     [Route("list")]
     public Task<ActionResult<IEnumerable<TodoListItem>>> Get() =>
@@ -121,9 +122,9 @@ public class TodoController : ControllerBase
     }
 
     // Haz que esto sea ResultHandler<TodoListItem>
-    // no debe ser nullable, debe lanzar error en repositorio
     private async Task<ActionResult<TodoListItem>> GetById(GetById gbi, int id)
     {
+        
         var todo = await gbi(id);
         if (todo != null)
         {

@@ -8,14 +8,13 @@ using static Prelude;
 
 public class ListAcceptance
 {
-
     [Fact(DisplayName = "Creates a Todo item, but not a duplicate")]
     public async Task Test1()
     {
         await using var server = await TestServer.Create();
         Assert.Empty(await server.Get<List<TodoListItem>>("todo/list", None));
-        await server.Post("todo/create", None, new TodoCreation { Title = "my todo" });
-        Assert.Single(await server.Get<List<TodoListItem>>("todo/list", None));
+        var id = await server.Post("todo/create", None, new TodoCreation { Title = "my todo" });
+        Assert.Collection(await server.Get<List<TodoListItem>>("todo/list", None), todo => todo.ID.Equals(id));
         try
         {
             await server.Post("todo/create", None, new TodoCreation { Title = "my todo" });
@@ -36,16 +35,9 @@ public class ListAcceptance
         Assert.Empty(await server.Get<List<TodoListItem>>("todo/list", None));
         await server.Post("todo/create", None, new TodoCreation { Title = "my todo" });
         Assert.Single(await server.Get<List<TodoListItem>>("todo/list", None));
-        try
-        {
-            var todo = await server.Get<TodoListItem>("todo/id/1", None);
-            Assert.Equal(1, todo.ID);
-        }
-        catch (FlurlHttpException ex)
-        {
-            Assert.Fail("Couldn't find a todo by that id");
-        }
 
+        var todo = await server.Get<TodoListItem>("todo/id/1", None);
+        Assert.Equal(1, todo.ID);
         Assert.Single(await server.Get<List<TodoListItem>>("Todo", None));
     }
 
@@ -72,27 +64,17 @@ public class ListAcceptance
         Assert.Empty(await server.Get<List<TodoListItem>>("todo/list", None));
 
         var todoBody = new TodoCreation { Title = "my todo" };
-        await server.Post("todo/create", None, todoBody);
+        var todoId = await server.Post("todo/create", None, todoBody);
 
         var todoList = await server.Get<List<TodoListItem>>("todo/list", None);
-        var todoId = todoList[0].ID;
-        var todo = todoList[0];
         Assert.Single(todoList);
-        Assert.False(todo.IsCompleted);
+        Assert.False(todoList[0].IsCompleted);
 
-        try
-        {
-            await server.Put($"todo/completed/{todoId}", None, None);
-        }
-        catch (FlurlHttpException ex)
-        {
-            Assert.Fail("Couldn't mark todo as complete");
-        }
-
+        await server.Put($"todo/completed/{todoId}", None, None);
         var todoListAfterMarkingComplete = await server.Get<List<TodoListItem>>("todo/list", None);
         Assert.Single(todoListAfterMarkingComplete);
         Assert.True(todoListAfterMarkingComplete[0].IsCompleted);
-        
+
         try
         {
             await server.Put($"todo/completed/{todoId}", None, None);
@@ -103,7 +85,7 @@ public class ListAcceptance
             Assert.Equal(409, ex.StatusCode);
         }
     }
-    
+
     [Fact(DisplayName = "Can't mark a todo item as completed or incomplete if it doesn't exist")]
     public async Task Test5()
     {
@@ -114,25 +96,23 @@ public class ListAcceptance
         {
             await server.Put("todo/completed/3", None, None);
             Assert.Fail("Should not have found todo");
-
         }
         catch (FlurlHttpException ex)
         {
             Assert.Equal(404, ex.StatusCode);
         }
-        
+
         try
         {
             await server.Put("todo/incomplete/3", None, None);
             Assert.Fail("Should not have found todo");
-
         }
         catch (FlurlHttpException ex)
         {
             Assert.Equal(404, ex.StatusCode);
         }
     }
-    
+
     [Fact(DisplayName = "Marks a todo item as incomplete but not when it was already incomplete")]
     public async Task Test6()
     {
@@ -140,29 +120,10 @@ public class ListAcceptance
         Assert.Empty(await server.Get<List<TodoListItem>>("todo/list", None));
 
         var todoBody = new TodoCreation { Title = "my todo" };
-        await server.Post("todo/create", None, todoBody);
+        var todoId = await server.Post("todo/create", None, todoBody);
         var todoList = await server.Get<List<TodoListItem>>("todo/list", None);
-        var todoId = todoList[0].ID;
-        await server.Put($"todo/completed/{todoId}", None, None);
-        
-        todoList = await server.Get<List<TodoListItem>>("todo/list", None);
-        var todo = todoList[0];
-        Assert.Single(todoList);
-        Assert.True(todo.IsCompleted);
+        Assert.False(todoList[0].IsCompleted);
 
-        try
-        {
-            await server.Put($"todo/incomplete/{todoId}", None, None);
-        }
-        catch (FlurlHttpException ex)
-        {
-            Assert.Fail("Couldn't mark todo as complete");
-        }
-
-        var todoListAfterMarkingIncomplete = await server.Get<List<TodoListItem>>("todo/list", None);
-        Assert.Single(todoListAfterMarkingIncomplete);
-        Assert.False(todoListAfterMarkingIncomplete[0].IsCompleted);
-        
         try
         {
             await server.Put($"todo/incomplete/{todoId}", None, None);
@@ -172,8 +133,18 @@ public class ListAcceptance
         {
             Assert.Equal(409, ex.StatusCode);
         }
+
+        await server.Put($"todo/completed/{todoId}", None, None);
+        todoList = await server.Get<List<TodoListItem>>("todo/list", None);
+        Assert.Single(todoList);
+        Assert.True(todoList[0].IsCompleted);
+
+        await server.Put($"todo/incomplete/{todoId}", None, None);
+        todoList = await server.Get<List<TodoListItem>>("todo/list", None);
+        Assert.Single(todoList);
+        Assert.False(todoList[0].IsCompleted);
     }
-    
+
     [Fact(DisplayName = "Get list of all incomplete todos")]
     public async Task Test7()
     {
@@ -186,19 +157,12 @@ public class ListAcceptance
         await server.Put("todo/completed/2", None, None);
         var todoList = await server.Get<List<TodoListItem>>("todo/list", None);
         Assert.Equal(4, todoList.Count);
-        try
-        {
-            todoList = await server.Get<List<TodoListItem>>("todo/list-incomplete", None);
-        }
-        catch (FlurlHttpException ex)
-        {
-            Assert.Fail("Couldn't get list");
-        }
 
+        todoList = await server.Get<List<TodoListItem>>("todo/list-incomplete", None);
         Assert.Equal(3, todoList.Count);
         Assert.All(todoList, todo => todo.IsCompleted.Equals(false));
     }
-    
+
     [Fact(DisplayName = "Get list of all complete todos")]
     public async Task Test8()
     {
@@ -212,15 +176,8 @@ public class ListAcceptance
         await server.Put("todo/completed/3", None, None);
         var todoList = await server.Get<List<TodoListItem>>("todo/list", None);
         Assert.Equal(4, todoList.Count);
-        try
-        {
-            todoList = await server.Get<List<TodoListItem>>("todo/list-complete", None);
-        }
-        catch (FlurlHttpException ex)
-        {
-            Assert.Fail("Couldn't get list");
-        }
 
+        todoList = await server.Get<List<TodoListItem>>("todo/list-complete", None);
         Assert.Equal(2, todoList.Count);
         Assert.All(todoList, todo => todo.IsCompleted.Equals(true));
     }
