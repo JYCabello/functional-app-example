@@ -8,7 +8,8 @@ namespace FunctionalTodo;
 
 public enum AlternateFlow
 {
-    Conflict
+    Conflict,
+    Notfound
 }
 
 public class ResultHandler<TOk> : IActionResult
