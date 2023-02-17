@@ -39,7 +39,7 @@ public class TodoController : ControllerBase
 
     [HttpPost(Name = "GetById")]
     [Route("id/{id:int}")]
-    public Task<ActionResult<TodoListItem>> GetById(int id) =>
+    public ResultHandler<TodoListItem> GetById(int id) =>
         GetById(dbAccessFunctions.GetTodoById, id);
 
     [HttpPost(Name = "Create")]
@@ -118,16 +118,15 @@ public class TodoController : ControllerBase
         return Ok(todos);
     }
 
+    // HECHO
     // Haz que esto sea ResultHandler<TodoListItem>
-    private async Task<ActionResult<TodoListItem>> GetById(GetById gbi, int id)
+    private ResultHandler<TodoListItem> GetById(GetById gbi, int id)
     {
-        var todo = await gbi(id);
-        if (todo != null)
-        {
-            return Ok(todo);
-        }
+        AsyncResult<TodoListItem, AlternateFlow> LiftGet(AsyncOption<TodoListItem> todo) =>
+            todo.Match(foundTodo => Result<TodoListItem, AlternateFlow>.Ok(foundTodo), () => Error(AlternateFlow.Notfound));
 
-        return NotFound();
+        return from todo in gbi(id).Apply(LiftGet)
+            select todo;
     }
 
     // Haz que esto sea ResultHandler<Unit> y retorne:

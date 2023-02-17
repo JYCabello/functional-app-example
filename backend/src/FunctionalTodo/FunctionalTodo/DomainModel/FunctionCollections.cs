@@ -36,14 +36,17 @@ public class DbAccessFunctions : IDbAccessFunctions
 
     public GetAllIncompleteFromDb GetAllIncompleteFromDb =>
         BuildGetAllIncompleteFromDb(settingsFunctions.GetConnectionString);
+
     public GetAllCompleteFromDb GetAllCompleteFromDb =>
         BuildGetAllCompleteFromDb(settingsFunctions.GetConnectionString);
+
     public CreateTodo CreateTodo => BuildExecuteQuery(settingsFunctions.GetConnectionString);
     public GetById GetTodoById => BuildGetTodoByIdQuery(settingsFunctions.GetConnectionString);
     public MarkTodoAsComplete MarkAsComplete => BuildMarkTodoAsCompleteQuery(settingsFunctions.GetConnectionString);
 
     public MarkTodoAsIncomplete MarkTodoAsIncomplete =>
         BuildMarkTodoAsIncompleteQuery(settingsFunctions.GetConnectionString);
+
     public CheckIfCompleted CheckIfCompleted => BuildCheckIfCompleted(settingsFunctions.GetConnectionString);
     public FindById FindById => BuildFindByIdQuery(settingsFunctions.GetConnectionString);
     public FindByTitle FindByTitle => BuildFindByTitleQuery(settingsFunctions.GetConnectionString);
@@ -56,7 +59,7 @@ public class DbAccessFunctions : IDbAccessFunctions
                 "SELECT ID, Title, IsCompleted FROM Todo"
             );
         };
-    
+
     public GetAllIncompleteFromDb BuildGetAllIncompleteFromDb(GetConnectionString getConnectionString) =>
         async () =>
         {
@@ -65,7 +68,7 @@ public class DbAccessFunctions : IDbAccessFunctions
                 "SELECT ID, Title, IsCompleted FROM Todo WHERE IsCompleted='false'"
             );
         };
-    
+
     public GetAllCompleteFromDb BuildGetAllCompleteFromDb(GetConnectionString getConnectionString) =>
         async () =>
         {
@@ -99,7 +102,7 @@ public class DbAccessFunctions : IDbAccessFunctions
 
             return Go();
         };
-    
+
     public FindById BuildFindByIdQuery(GetConnectionString getConnectionString) =>
         id =>
         {
@@ -116,22 +119,29 @@ public class DbAccessFunctions : IDbAccessFunctions
             return Go();
         };
 
+    // No deberia ser exactamente igual al de arriba (y por tanto inutil)? Que utilidad tiene un Get comparado con un Find
+    // si usamos Optional en vez de try/catch? O hay situaciones en las que usar try/catch?
     public GetById BuildGetTodoByIdQuery(GetConnectionString getConnectionString) =>
-        async id =>
+        id =>
         {
-            await using var db = new SqlConnection(getConnectionString());
-            TodoListItem todo;
-            try
+            async Task<Option<TodoListItem>> Go()
             {
-                todo = await db.QuerySingleAsync<TodoListItem>(
-                    "SELECT ID, Title, IsCompleted FROM Todo WHERE ID = @ID", new { ID = id });
-            }
-            catch (Exception)
-            {
-                return null;
+                await using var db = new SqlConnection(getConnectionString());
+                TodoListItem todo = null;
+                try
+                {
+                    todo = await db.QuerySingleAsync<TodoListItem>(
+                        "SELECT ID, Title, IsCompleted FROM Todo WHERE ID = @ID", new { ID = id });
+                }
+                catch (Exception)
+                {
+                    // No se que hacer aquí ayuda
+                }
+
+                return Optional(todo);
             }
 
-            return todo;
+            return Go();
         };
 
     public MarkTodoAsComplete BuildMarkTodoAsCompleteQuery(GetConnectionString getConnectionString) =>
@@ -144,7 +154,7 @@ public class DbAccessFunctions : IDbAccessFunctions
 
             return id;
         };
-    
+
     public MarkTodoAsIncomplete BuildMarkTodoAsIncompleteQuery(GetConnectionString getConnectionString) =>
         async id =>
         {
@@ -155,13 +165,13 @@ public class DbAccessFunctions : IDbAccessFunctions
 
             return id;
         };
-    
+
     public CheckIfCompleted BuildCheckIfCompleted(GetConnectionString getConnectionString) =>
         async id =>
         {
             await using var db = new SqlConnection(getConnectionString());
             return await db.QuerySingleAsync<bool>(
-                    "SELECT CAST(IsCompleted AS BIT) FROM Todo WHERE ID = @ID", new { ID = id });
+                "SELECT CAST(IsCompleted AS BIT) FROM Todo WHERE ID = @ID", new { ID = id });
         };
 }
 

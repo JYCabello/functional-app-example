@@ -59,11 +59,11 @@ public class ResultHandler<TOk> : IActionResult
             _ => new OkObjectResult(right)
         };
 
-    // aqui es donde tengo que cambiar los errores
     private static IActionResult Handle(AlternateFlow alternateFlow, ActionContext context) =>
         alternateFlow switch
         {
             AlternateFlow.Conflict => ErrorResult("Conflict", HttpStatusCode.Conflict),
+            AlternateFlow.Notfound => ErrorResult("Not Found", HttpStatusCode.NotFound),
             _ => ErrorResult("Error desconocido.", HttpStatusCode.InternalServerError)
         };
 }
