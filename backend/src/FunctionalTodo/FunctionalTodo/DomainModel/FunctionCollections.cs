@@ -152,7 +152,7 @@ public class DbAccessFunctions : IDbAccessFunctions
             await db.ExecuteAsync(
                 "UPDATE Todo SET IsCompleted = 'true' WHERE ID = @ID", new { ID = id });
 
-            return id;
+            return unit;
         };
 
     public MarkTodoAsIncomplete BuildMarkTodoAsIncompleteQuery(GetConnectionString getConnectionString) =>
@@ -167,11 +167,18 @@ public class DbAccessFunctions : IDbAccessFunctions
         };
 
     public CheckIfCompleted BuildCheckIfCompleted(GetConnectionString getConnectionString) =>
-        async id =>
+        id =>
         {
-            await using var db = new SqlConnection(getConnectionString());
-            return await db.QuerySingleAsync<bool>(
-                "SELECT CAST(IsCompleted AS BIT) FROM Todo WHERE ID = @ID", new { ID = id });
+            async Task<Option<Unit>> Go()
+            {
+                await using var db = new SqlConnection(getConnectionString());
+                var result = await db.QuerySingleAsync<bool>(
+                    "SELECT CAST(IsCompleted AS BIT) FROM Todo WHERE ID = @ID", new { ID = id });
+
+                return result ? unit : None;
+            }
+
+            return Go();
         };
 }
 

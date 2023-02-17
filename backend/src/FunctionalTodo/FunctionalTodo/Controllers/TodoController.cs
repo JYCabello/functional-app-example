@@ -49,7 +49,7 @@ public class TodoController : ControllerBase
 
     [HttpPut(Name = "MarkAsComplete")]
     [Route("completed/{id:int}")]
-    public Task<ActionResult> MarkAsComplete(int id) =>
+    public ResultHandler<Unit> MarkAsComplete(int id) =>
         MarkAsComplete(dbAccessFunctions.MarkAsComplete, dbAccessFunctions.FindById,
             dbAccessFunctions.CheckIfCompleted, id);
 
@@ -123,22 +123,37 @@ public class TodoController : ControllerBase
     private ResultHandler<TodoListItem> GetById(GetById gbi, int id)
     {
         AsyncResult<TodoListItem, AlternateFlow> LiftGet(AsyncOption<TodoListItem> todo) =>
-            todo.Match(foundTodo => Result<TodoListItem, AlternateFlow>.Ok(foundTodo), () => Error(AlternateFlow.Notfound));
+            todo.Match(foundTodo => Result<TodoListItem, AlternateFlow>.Ok(foundTodo),
+                () => Error(AlternateFlow.Notfound));
 
         return from todo in gbi(id).Apply(LiftGet)
             select todo;
     }
 
     // Haz que esto sea ResultHandler<Unit> y retorne:
-    private async Task<ActionResult> MarkAsComplete(MarkTodoAsComplete mtac, FindById findById,
+    private ResultHandler<Unit> MarkAsComplete(MarkTodoAsComplete mtac, FindById findById,
         CheckIfCompleted checkIfCompleted, int id)
     {
-        var found = await findById(id);
-        if (found.IsNone) return NotFound();
-        var isAlreadyCompleted = await checkIfCompleted(id);
-        if (isAlreadyCompleted) return Conflict();
-        await mtac(id);
-        return Ok();
+        AsyncResult<Unit, AlternateFlow> LiftFind(AsyncOption<TodoListItem> todo) =>
+            todo.Match(_ => Result<Unit, AlternateFlow>.Ok(unit), () => Error(AlternateFlow.Notfound));
+
+        AsyncResult<Unit, AlternateFlow> LiftCheckIfCompleted(AsyncOption<Unit> isItComplete) =>
+            isItComplete.Match(_ => Error(AlternateFlow.Conflict), () => Result<Unit, AlternateFlow>.Ok(unit));
+
+        AsyncResult<Unit, AlternateFlow> LiftMarkTodo(Task<Unit> queryResult) {
+            async Task<Result<Unit, AlternateFlow>> GoLift()
+            {
+                await queryResult;
+                return unit;
+            };
+            return GoLift();
+        }
+        
+        return
+            from foundTodo in findById(id).Apply(LiftFind)
+            from incompleteTodo in checkIfCompleted(id).Apply(LiftCheckIfCompleted)
+            from markedTodo in mtac(id).Apply(LiftMarkTodo)
+            select markedTodo;
     }
 
     // Haz que esto sea ResultHandler<Unit> y retorne:
@@ -148,7 +163,7 @@ public class TodoController : ControllerBase
         var found = await findById(id);
         if (found.IsNone) return NotFound();
         var isAlreadyCompleted = await checkIfCompleted(id);
-        if (!isAlreadyCompleted) return Conflict();
+        if (isAlreadyCompleted.IsSome) return Conflict();
         await mtai(id);
         return Ok();
     }

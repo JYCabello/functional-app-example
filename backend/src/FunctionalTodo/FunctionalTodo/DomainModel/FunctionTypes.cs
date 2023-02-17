@@ -9,9 +9,9 @@ public delegate Task<IEnumerable<TodoListItem>> GetAllCompleteFromDb();
 public delegate Task<TodoListItem> GetByTitle(string title);
 public delegate AsyncOption<TodoListItem> GetById(int id);
 public delegate Task<int> CreateTodo(TodoCreation parameters);
-public delegate Task<int> MarkTodoAsComplete(int id);
+public delegate Task<Unit> MarkTodoAsComplete(int id);
 public delegate Task<int> MarkTodoAsIncomplete(int id);
-public delegate Task<bool> CheckIfCompleted(int id);
+public delegate AsyncOption<Unit> CheckIfCompleted(int id);
 public delegate AsyncOption<TodoListItem> FindByTitle(string title);
 public delegate AsyncOption<TodoListItem> FindById(int id);
 
